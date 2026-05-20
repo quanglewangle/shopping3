@@ -1,4 +1,4 @@
-package com.quanglewangle.peter.shopping3;
+package com.quanglewangle.peter.shoppingBeta;
 
 
 import android.app.TabActivity;
@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
-
-import com.quanglewangle.peter.shoppingBeta.R;
 
 public class AndroidTabAndListView extends TabActivity {
 	// TabSpec Names
@@ -26,7 +24,6 @@ public class AndroidTabAndListView extends TabActivity {
         // Tab Icon
         inboxSpec.setIndicator(INBOX_SPEC, getResources().getDrawable(R.drawable.icon_inbox));
         Intent inboxIntent = new Intent(this, CupboardActivity.class);
-        inboxIntent.putExtra("firstKeyName","FirstKeyValue");
         // Tab Content
         inboxSpec.setContent(inboxIntent);
 

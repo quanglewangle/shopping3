@@ -1,20 +1,25 @@
-package com.quanglewangle.peter.shopping3;
+package com.quanglewangle.peter.shoppingBeta;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -37,14 +42,6 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Log.d("PETER", "in CupboardActivity ocCreate");
-        Intent myIntent = getIntent(); // gets the previously created intent
-        String firstKeyName = myIntent.getStringExtra("firstKeyName");
-
-        Log.d("PETER", "intent parameter " + firstKeyName);
-        //	setContentView(R.layout.activity_main);
-        setContentView(R.layout.cupboard_list);
     }
     @Override
 
@@ -52,7 +49,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         super.onResume();
         setContentView(R.layout.cupboard_list);
         LoadURL loadUrl = new LoadURL(CupboardActivity.this);
-        loadUrl.execute(new String[]{Constants.SHOPPING_URL+"?cmd=dumpFiltered&curBasket=1"});
+        loadUrl.execute(new String[]{Constants.DUMP_CUPBOARD});
     }
 
     @Override
@@ -61,99 +58,6 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.context_menu, menu);
-    }
-
-    public boolean onContextItemSelected(MenuItem item) {
-        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item
-                .getMenuInfo();
-        final int listPosition = info.position;
-        products.get(listPosition).get("description");
-        switch (item.getItemId()) {
-            case R.id.quantity:
-                final Dialog dialog = new Dialog(this);
-                dialog.setContentView(R.layout.dialog_layout);
-                dialog.show();
-
- /*               String title = products.get(listPosition).get("description");
-                Toast.makeText(getApplicationContext(), products.get(listPosition).get("description")+" "+"quantity", Toast.LENGTH_SHORT).show();
-                AlertDialog.Builder alert = new AlertDialog.Builder(this);
-                alert.setTitle(title);
-                alert.setMessage("Set quantity or note");
-
-                // Set an EditText view to get user input
-                final EditText input;
-                input = new EditText(this);
-                input.setText( products.get(listPosition).get("quantity"));
-                input.setSelection(input.getText().length());
-                alert.setView(input);
-
-                alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        String value = input.getText().toString();
-                        Toast.makeText(getApplicationContext(), "Dialog got:" + value, Toast.LENGTH_SHORT).show();
-                        Map o = (HashMap<String, String>) products.get(listPosition);
-                        LoadURL loadUrl = new LoadURL(CupboardActivity.this);
-                        loadUrl.execute(new String[]{"http://fimblefowl.co.uk/json?cmd=ubQ&newQuantity="+value+ "&product_id=" + o.get("id")});
-
-                        return;
-                    }
-                });
-
-                alert.setNegativeButton("Cancel",
-                        new DialogInterface.OnClickListener() {
-
-                            public void onClick(DialogInterface dialog, int which) {
-                                // TODO Auto-generated method stub
-                                return;
-                            }
-                        });
-                alert.show();
-
-                return true;
-                */
-            case R.id.description:
-                Toast.makeText(getApplicationContext(), "description", Toast.LENGTH_SHORT).show();
-                String title2 = products.get(listPosition).get("description");
-                Toast.makeText(getApplicationContext(), products.get(listPosition).get("description")+" "+"quantity", Toast.LENGTH_SHORT).show();
-                AlertDialog.Builder alert2 = new AlertDialog.Builder(this);
-                alert2.setTitle(title2);
-                alert2.setMessage("Edit description");
-
-                // Set an EditText view to get user input
-                final EditText input2;
-                input2 = new EditText(this);
-                input2.setText( products.get(listPosition).get("description"));
-                input2.setSelection(input2.getText().length());
-                alert2.setView(input2);
-
-                alert2.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-
-                        String value = input2.getText().toString();
-                        Toast.makeText(getApplicationContext(), "Dialog got:" + value, Toast.LENGTH_SHORT).show();
-                        Map o = (HashMap<String, String>) products.get(listPosition);
-                        LoadURL loadUrl = new LoadURL(CupboardActivity.this);
-                        loadUrl.execute(new String[]{Constants.SHOPPING_URL+"?cmd=uBd&newDescription="+value+ "&product_id=" + o.get("id")});
-
-                        return;
-                    }
-                });
-
-                alert2.setNegativeButton("Cancel",
-                        new DialogInterface.OnClickListener() {
-
-                            public void onClick(DialogInterface dialog, int which) {
-                                // TODO Auto-generated method stub
-                                return;
-                            }
-                        });
-                alert2.show();
-
-                return true;
-            default:
-        }
-        return true;
     }
 
     @Override
@@ -194,7 +98,17 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         getListView().setSelectionFromTop(pos, 0);
         getListView().setLongClickable(true);
 
-        registerForContextMenu(getListView());
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
+                                           int pos, long id) {
+                // TODO Auto-generated method stub
+
+                Log.d("long clicked","pos: " + pos);
+                showAlertDialog(pos);
+                return true;
+            }
+        });
     }
 
     protected void onListItemClick(ListView list, View v, int position, long id) {
@@ -206,7 +120,49 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         loadUrl.execute(new String[]{Constants.SHOPPING_URL+"?cmd=ubT&newBasket=2&product_id=" + o.get("id") + "&curBasket=1"});
     }
 
-    public void sendForm(View view) {
+    private void showAlertDialog(int position) {
+        Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
+
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+
+        LayoutInflater inflater = this.getLayoutInflater();
+        View v = inflater.inflate(R.layout.dialog_layout, null);  // this line
+        alertDialog.setView(v);
+        AlertDialog dialog = alertDialog.create();
+
+        EditText description = (EditText) v.findViewById(R.id.descriptionInput);
+        description.setText((CharSequence) o.get("description"));
+        TextView item_name = (TextView) v.findViewById(R.id.item_name);
+        item_name.setText((CharSequence) o.get("description"));
+
+        EditText note = (EditText) v.findViewById(R.id.noteInput);
+        note.setText((CharSequence) o.get("quantity"));
+        TextView itemLabel = (TextView) v.findViewById(R.id.notesLabel);
+        itemLabel.setText((CharSequence) o.get("quantity"));
+
+        Button bt_yes = (Button) v.findViewById(R.id.buttonSend);
+        bt_yes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("button", "pushed" + description + item_name);
+
+            }
+        });
+        RadioButton rb = (RadioButton) v.findViewById(R.id.toCupboardRadioButton);
+
+        View.OnClickListener toCupboardRadioButtonListener = null;
+   //     rb.setOnClickListener(toCupboardRadioButtonListener);
+
+        toCupboardRadioButtonListener = new View.OnClickListener() {
+            public void onClick(View v) {
+                //Your Implementaions...
+                Log.d("radiobutton", "cupboard");
+            }
+        };
+
+
+        AlertDialog alert = alertDialog.create();
+        alert.show();
     }
 }
 

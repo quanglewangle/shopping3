@@ -1,4 +1,4 @@
-package com.quanglewangle.peter.shopping3;
+package com.quanglewangle.peter.shoppingBeta;
 
 import android.content.Context;
 import android.util.Log;
@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import static com.quanglewangle.peter.shoppingBeta.R.id.quantity;
-
-import com.quanglewangle.peter.shoppingBeta.R;
 
 
 public class CupboardListAdapter extends BaseAdapter {
@@ -43,11 +41,7 @@ public class CupboardListAdapter extends BaseAdapter {
 	}
 
 	public void update(ArrayList<HashMap<String, String>> products_){
-		Log.d("updating", "products_ size: " + products_.size() + " products size: "+ products.size() );
-	//	this.products.clear();
-		Log.d("updating", "products size: " + products_.size());
-        this.products = new ArrayList<HashMap<String, String>>(products_);
-		this.products.addAll(products_);
+        this.products = new ArrayList<>(products_);
         notifyDataSetChanged();
     }
 	public void deleteItem (int position) {

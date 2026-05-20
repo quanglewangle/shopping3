@@ -1,4 +1,4 @@
-package com.quanglewangle.peter.shopping3;
+package com.quanglewangle.peter.shoppingBeta;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -26,16 +26,13 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("PETER", "in LIST acc");
-        //	setContentView(R.layout.activity_main);
-        setContentView(R.layout.cupboard_list);
     }
     @Override
     protected void onResume() {
         super.onResume();
         setContentView(R.layout.cupboard_list);
         LoadURL loadUrl = new LoadURL(ListActivity.this);
-        loadUrl.execute(new String[]{Constants.SHOPPING_URL+"?cmd=dumpFiltered&curBasket=2"});
+        loadUrl.execute(new String[]{Constants.DUMP_LIST});
     }
 
     @Override
@@ -84,8 +81,6 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         super.onListItemClick(list, v, position, id);
         pos = list.getFirstVisiblePosition();
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
-        String pen = o.toString();
-      //  Toast.makeText(this, "You : " + " " + pen + o.getClass(), Toast.LENGTH_SHORT).show();
         //     final WebChangeBasketStatus webrequest = new WebChangeBasketStatus((WebChangeBasketStatus.download_complete)this);
         //    webrequest.doRequest("http://fimblefowl.co.uk/json?cmd=ubT&basket=2&product_id=" + o.get("id"));
         LoadURL loadUrl = new LoadURL(ListActivity.this);
