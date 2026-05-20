@@ -11,7 +11,9 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static com.quanglewangle.peter.shopping3.R.id.quantity;
+import static com.quanglewangle.peter.shoppingBeta.R.id.quantity;
+
+import com.quanglewangle.peter.shoppingBeta.R;
 
 
 public class CupboardListAdapter extends BaseAdapter {

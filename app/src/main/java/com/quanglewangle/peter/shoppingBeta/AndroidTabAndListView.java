@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
-import com.quanglewangle.peter.shopping3.R;
+import com.quanglewangle.peter.shoppingBeta.R;
 
 public class AndroidTabAndListView extends TabActivity {
 	// TabSpec Names
