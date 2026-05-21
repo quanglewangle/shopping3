@@ -4,10 +4,13 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RadioButton;
@@ -23,10 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by peter on 29/07/2017.
- */
-
 public class BasketActivity extends ListActivity implements AsyncTaskCompleteListener<String> {
     CupboardListAdapter adapter;
     ArrayList<HashMap<String, String>> products;
@@ -35,54 +34,63 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
+
     @Override
     protected void onResume() {
         super.onResume();
         setContentView(R.layout.basket_list);
-        LoadURL loadUrl = new LoadURL(BasketActivity.this);
-        loadUrl.execute(new String[]{Constants.DUMP_BASKET});
+        new LoadURL(BasketActivity.this).execute(new String[]{Constants.DUMP_BASKET});
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.options_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.quick_shop_mode).setChecked(isQuickShopMode());
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.quick_shop_mode) {
+            boolean newState = !item.isChecked();
+            item.setChecked(newState);
+            setQuickShopMode(newState);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
     public void onTaskComplete(String result) {
-        Log.d("IN CALLBACK ", result);
-
         products = new ArrayList<HashMap<String, String>>();
         try {
             JSONArray data_array = new JSONArray(result);
 
             for (int i = 0; i < data_array.length(); i++) {
                 JSONObject obj = new JSONObject(data_array.get(i).toString());
-                Log.d("in get data", data_array.get(i).toString());
                 HashMap<String, String> map = new HashMap<String, String>();
 
-                // adding each child node to HashMap key => value
                 map.put("description", obj.getString("description"));
-
                 map.put("barcode", obj.optString("barcode"));
                 map.put("id", obj.getString("id"));
                 map.put("quantity", obj.optString("quantity"));
                 map.put("aisle", obj.optString("aisle"));
+                map.put("quickShopMode", obj.optString("quickShop"));
 
-                // adding HashList to ArrayList
                 products.add(map);
-                Log.d("adding", "products size: " + products.size());
             }
-//			adapter.notifyDataSetChanged();
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-       /* adapter = new SimpleAdapter(
-                this, products,
-                R.layout.cupboard_list_item, new String[]{"description", "barcode", "date"},
-                new int[]{R.id.description, R.id.barcode, R.id.date}); */
         adapter = new CupboardListAdapter(this, products);
         getListView().setSelectionFromTop(pos, 0);
-        // updating listview
         setListAdapter(adapter);
-        Log.d("about to call update ", "products size: " + products.size());
-//        adapter.update(products);
         ((BaseAdapter) adapter).notifyDataSetChanged();
         getListView().setLongClickable(true);
         getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -98,8 +106,9 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         super.onListItemClick(list, v, position, id);
         pos = list.getFirstVisiblePosition();
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
-        LoadURL loadUrl = new LoadURL(BasketActivity.this);
-        loadUrl.execute(new String[]{Constants.SHOPPING_URL+"?cmd=ubT&newBasket=1&product_id=" + o.get("id") + "&curBasket=3"});
+        new LoadURL(BasketActivity.this).execute(new String[]{
+            Constants.SHOPPING_URL + "?cmd=ubT&newBasket=1&product_id=" + o.get("id") + "&curBasket=3"
+        });
     }
 
     private void showEditDialog(int position) {
@@ -121,6 +130,9 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         EditText aisleInput = (EditText) dialogView.findViewById(R.id.aisleInput);
         aisleInput.setText(product.get("aisle"));
 
+        CheckBox quickShopCheckBox = (CheckBox) dialogView.findViewById(R.id.checkBox);
+        quickShopCheckBox.setChecked("true".equals(product.get("quickShopMode")));
+
         RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
         RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
         RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
@@ -140,6 +152,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
                         + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
                         + "&curBasket=" + targetBasket
                         + "&newPrice=0&newPriority="
+                        + "&newQuickShop=" + (quickShopCheckBox.isChecked() ? "1" : "0")
                         + "&displayBasket=3";
                     new LoadURL(BasketActivity.this).execute(new String[]{url});
                 } catch (java.io.UnsupportedEncodingException e) {
@@ -152,5 +165,13 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         dialog.show();
     }
 
-}
+    private boolean isQuickShopMode() {
+        return getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(Constants.PREF_QUICK_SHOP_MODE, false);
+    }
 
+    private void setQuickShopMode(boolean value) {
+        getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE).edit()
+                .putBoolean(Constants.PREF_QUICK_SHOP_MODE, value).apply();
+    }
+}
