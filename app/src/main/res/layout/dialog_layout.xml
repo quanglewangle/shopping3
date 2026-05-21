@@ -109,19 +109,19 @@
                 android:text="to cupboard" />
 
             <RadioButton
-                android:id="@+id/toBasketRadioButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="to basket" />
-
-            <RadioButton
                 android:id="@+id/toListRadioButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:buttonTint="@color/green"
                 android:minHeight="48dp"
                 android:text="to list" />
+
+            <RadioButton
+                android:id="@+id/toBasketRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="to basket" />
 
         </RadioGroup>
 

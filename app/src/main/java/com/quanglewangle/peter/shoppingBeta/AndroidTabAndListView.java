@@ -1,47 +1,72 @@
 package com.quanglewangle.peter.shoppingBeta;
 
-
 import android.app.TabActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
 public class AndroidTabAndListView extends TabActivity {
-	// TabSpec Names
-	private static final String INBOX_SPEC = "Cupboard";
-	private static final String OUTBOX_SPEC = "List";
-	private static final String PROFILE_SPEC = "Basket";
-	
+    private static final String INBOX_SPEC = "Cupboard";
+    private static final String OUTBOX_SPEC = "List";
+    private static final String PROFILE_SPEC = "Basket";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        TabHost tabHost = getTabHost();
-        // Inbox Tab
-        TabSpec inboxSpec = tabHost.newTabSpec(INBOX_SPEC);
-        // Tab Icon
-        inboxSpec.setIndicator(INBOX_SPEC, getResources().getDrawable(R.drawable.icon_inbox));
-        Intent inboxIntent = new Intent(this, CupboardActivity.class);
-        // Tab Content
-        inboxSpec.setContent(inboxIntent);
 
-        // Outbox Tab
+        TabHost tabHost = getTabHost();
+
+        TabSpec inboxSpec = tabHost.newTabSpec(INBOX_SPEC);
+        inboxSpec.setIndicator(INBOX_SPEC, getResources().getDrawable(R.drawable.icon_inbox));
+        inboxSpec.setContent(new Intent(this, CupboardActivity.class));
+
         TabSpec outboxSpec = tabHost.newTabSpec(OUTBOX_SPEC);
         outboxSpec.setIndicator(OUTBOX_SPEC, getResources().getDrawable(R.drawable.icon_outbox));
-        Intent outboxIntent = new Intent(this, ListActivity.class);
-        outboxSpec.setContent(outboxIntent);
-        
-        // Profile Tab
+        outboxSpec.setContent(new Intent(this, ListActivity.class));
+
         TabSpec profileSpec = tabHost.newTabSpec(PROFILE_SPEC);
         profileSpec.setIndicator(PROFILE_SPEC, getResources().getDrawable(R.drawable.icon_profile));
-        Intent profileIntent = new Intent(this, BasketActivity.class);
-        profileSpec.setContent(profileIntent);
-        
-        // Adding all TabSpec to TabHost
-        tabHost.addTab(inboxSpec); // Adding Inbox tab
-        tabHost.addTab(outboxSpec); // Adding Outbox tab
-        tabHost.addTab(profileSpec); // Adding Profile tab
+        profileSpec.setContent(new Intent(this, BasketActivity.class));
+
+        tabHost.addTab(inboxSpec);
+        tabHost.addTab(outboxSpec);
+        tabHost.addTab(profileSpec);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.options_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.quick_shop_mode).setChecked(isQuickShopMode());
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.quick_shop_mode) {
+            boolean newState = !item.isChecked();
+            item.setChecked(newState);
+            setQuickShopMode(newState);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private boolean isQuickShopMode() {
+        return getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
+                .getBoolean(Constants.PREF_QUICK_SHOP_MODE, false);
+    }
+
+    private void setQuickShopMode(boolean value) {
+        getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE).edit()
+                .putBoolean(Constants.PREF_QUICK_SHOP_MODE, value).apply();
     }
 }
