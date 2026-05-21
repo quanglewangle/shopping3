@@ -19,6 +19,7 @@
     <string name="product_location_hint">Aisle</string>
     <string name="edit_location_label">Aisle</string>
     <string name="product_done">Done</string>
-    <string name="feedbackbutton">OK</string>
+    <string name="send_button">OK</string>
+    <string name="empty">empty</string>
 
 </resources>
