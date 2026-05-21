@@ -57,6 +57,10 @@ public class AndroidTabAndListView extends TabActivity {
             setQuickShopMode(newState);
             return true;
         }
+        if (item.getItemId() == R.id.clear_all_quick_shop) {
+            new LoadURL(result -> {}).execute(new String[]{Constants.CLEAR_ALL_QUICK_SHOP});
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

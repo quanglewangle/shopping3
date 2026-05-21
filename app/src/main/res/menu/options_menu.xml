@@ -4,4 +4,7 @@
         android:id="@+id/quick_shop_mode"
         android:title="Quick Shop Mode"
         android:checkable="true" />
+    <item
+        android:id="@+id/clear_all_quick_shop"
+        android:title="Clear all Quick Shop" />
 </menu>
