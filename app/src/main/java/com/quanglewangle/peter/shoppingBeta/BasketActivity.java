@@ -62,6 +62,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
                 map.put("barcode", obj.optString("barcode"));
                 map.put("id", obj.getString("id"));
                 map.put("quantity", obj.optString("quantity"));
+                map.put("aisle", obj.optString("aisle"));
 
                 // adding HashList to ArrayList
                 products.add(map);
@@ -118,6 +119,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         quantityInput.setText(product.get("quantity"));
 
         EditText aisleInput = (EditText) dialogView.findViewById(R.id.aisleInput);
+        aisleInput.setText(product.get("aisle"));
 
         RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
         RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
@@ -135,7 +137,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
                         + "&product_id=" + productId
                         + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
                         + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
-                        + "&newAisle=" + URLEncoder.encode(aisleInput.getText().toString(), "UTF-8")
+                        + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
                         + "&curBasket=" + targetBasket
                         + "&newPrice=0&newPriority="
                         + "&displayBasket=3";

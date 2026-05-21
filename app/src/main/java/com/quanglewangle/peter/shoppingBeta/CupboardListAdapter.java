@@ -50,8 +50,8 @@ public class CupboardListAdapter extends BaseAdapter {
 
 	static class ViewHolderItem {
 		TextView description;
-		TextView basket;
 		TextView quantity;
+		TextView aisle;
 	}
 
 	@Override
@@ -64,6 +64,7 @@ public class CupboardListAdapter extends BaseAdapter {
 
 	        holder.quantity = (TextView) convertView.findViewById(quantity);
 			holder.description = (TextView) convertView.findViewById(R.id.description);
+			holder.aisle = (TextView) convertView.findViewById(R.id.aisle);
 
 			convertView.setTag(holder);
 		} else {
@@ -71,6 +72,7 @@ public class CupboardListAdapter extends BaseAdapter {
 		}
         holder.quantity.setText(products.get(position).get("quantity"));
 		holder.description.setText(products.get(position).get("description"));
+		holder.aisle.setText(products.get(position).get("aisle"));
 
 		return convertView;
 	}
