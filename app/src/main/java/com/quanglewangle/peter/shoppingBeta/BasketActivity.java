@@ -136,6 +136,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
         RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
         RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
+        RadioButton allToCupboard = (RadioButton) dialogView.findViewById(R.id.allToCupboardRadioButton);
         toBasket.setChecked(true);
 
         AlertDialog dialog = builder.create();
@@ -143,20 +144,26 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         ((Button) dialogView.findViewById(R.id.buttonSend)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String targetBasket = toCupboard.isChecked() ? "1" : toList.isChecked() ? "2" : "3";
-                try {
-                    String url = Constants.SHOPPING_URL + "?cmd=updR"
-                        + "&product_id=" + productId
-                        + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
-                        + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
-                        + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
-                        + "&curBasket=" + targetBasket
-                        + "&newPrice=0&newPriority="
-                        + "&newQuickShop=" + (quickShopCheckBox.isChecked() ? "1" : "0")
-                        + "&displayBasket=3";
-                    new LoadURL(BasketActivity.this).execute(new String[]{url});
-                } catch (java.io.UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                if (allToCupboard.isChecked()) {
+                    new LoadURL(BasketActivity.this).execute(new String[]{
+                        Constants.SHOPPING_URL + "?cmd=moveAllToCupboard"
+                    });
+                } else {
+                    String targetBasket = toCupboard.isChecked() ? "1" : toList.isChecked() ? "2" : "3";
+                    try {
+                        String url = Constants.SHOPPING_URL + "?cmd=updR"
+                            + "&product_id=" + productId
+                            + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
+                            + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
+                            + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
+                            + "&curBasket=" + targetBasket
+                            + "&newPrice=0&newPriority="
+                            + "&newQuickShop=" + (quickShopCheckBox.isChecked() ? "1" : "0")
+                            + "&displayBasket=3";
+                        new LoadURL(BasketActivity.this).execute(new String[]{url});
+                    } catch (java.io.UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
                 }
                 dialog.dismiss();
             }
