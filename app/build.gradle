@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     defaultConfig {
-        applicationId "com.quanglewangle.shopping"
+        applicationId "com.quanglewangle.shoppingBeta"
         minSdkVersion 23
-        targetSdkVersion 26
+        targetSdkVersion 29
         multiDexEnabled true
     }
     buildTypes {
@@ -14,6 +14,11 @@ android {
         }
     }
     productFlavors {
+    }
+    namespace 'com.quanglewangle.peter.shoppingBeta'
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 dependencies {

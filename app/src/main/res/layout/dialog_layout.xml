@@ -3,7 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:minHeight="48dp"
     android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/item_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Name"
+        android:textSize="20sp" />
 
     <LinearLayout
         android:id="@+id/description_layout"
@@ -17,24 +25,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/description" />
+            android:text="@string/edit_description_label" />
 
         <EditText
             android:id="@+id/descriptionInput"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Item name" />
-
+            android:minHeight="48dp"
+            android:text="@string/empty" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:orientation="horizontal"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/notesLable"
+            android:id="@+id/notesLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -45,9 +53,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="TextView"
+            android:importantForAutofill="no"
             android:inputType="text"
-            android:importantForAutofill="no" />
+            android:minHeight="48dp"
+            android:text="@string/empty" />
     </LinearLayout>
 
     <LinearLayout
@@ -69,17 +78,63 @@
             android:layout_weight="1"
             android:importantForAutofill="no"
             android:inputType="text"
-            android:text="aisle" />
+            android:minHeight="48dp"
+            android:text="@string/empty" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="167dp"
+        android:orientation="horizontal">
+
+        <RadioGroup
+            android:id="@+id/moveToRadioGroup"
+            android:layout_width="158dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="#FFC107">
+
+            <RadioButton
+                android:id="@+id/toCupboardRadioButton"
+                style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="#E91E63"
+                android:minHeight="48dp"
+                android:text="to cupboard" />
+
+            <RadioButton
+                android:id="@+id/toBasketRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="to basket" />
+
+            <RadioButton
+                android:id="@+id/toListRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:buttonTint="@color/green"
+                android:minHeight="48dp"
+                android:text="to list" />
+
+        </RadioGroup>
+
+        <CheckBox
+            android:id="@+id/checkBox"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:minHeight="72dp"
+            android:text="Quick Shop" />
+
     </LinearLayout>
 
     <Button
-    android:id="@+id/ButtonSend"
-    android:layout_height="wrap_content"
-    android:text="@string/feedbackbutton"
-    android:onClick="sendForm"
-    android:layout_width="wrap_content">
-    "
-    >
-</Button>
+        android:id="@+id/buttonSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/send_button">
+        >
+    </Button>
 
 </LinearLayout>

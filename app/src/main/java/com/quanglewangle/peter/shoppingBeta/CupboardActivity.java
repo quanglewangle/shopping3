@@ -22,6 +22,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.net.URLEncoder;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -121,48 +123,52 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     }
 
     private void showAlertDialog(int position) {
-        Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
+        HashMap<String, String> product = (HashMap<String, String>) this.getListAdapter().getItem(position);
+        String productId = product.get("id");
 
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_layout, null);
+        builder.setView(dialogView);
 
-        LayoutInflater inflater = this.getLayoutInflater();
-        View v = inflater.inflate(R.layout.dialog_layout, null);  // this line
-        alertDialog.setView(v);
-        AlertDialog dialog = alertDialog.create();
+        ((TextView) dialogView.findViewById(R.id.item_name)).setText(product.get("description"));
 
-        EditText description = (EditText) v.findViewById(R.id.descriptionInput);
-        description.setText((CharSequence) o.get("description"));
-        TextView item_name = (TextView) v.findViewById(R.id.item_name);
-        item_name.setText((CharSequence) o.get("description"));
+        EditText descriptionInput = (EditText) dialogView.findViewById(R.id.descriptionInput);
+        descriptionInput.setText(product.get("description"));
 
-        EditText note = (EditText) v.findViewById(R.id.noteInput);
-        note.setText((CharSequence) o.get("quantity"));
-        TextView itemLabel = (TextView) v.findViewById(R.id.notesLabel);
-        itemLabel.setText((CharSequence) o.get("quantity"));
+        EditText quantityInput = (EditText) dialogView.findViewById(R.id.noteInput);
+        quantityInput.setText(product.get("quantity"));
 
-        Button bt_yes = (Button) v.findViewById(R.id.buttonSend);
-        bt_yes.setOnClickListener(new View.OnClickListener() {
+        EditText aisleInput = (EditText) dialogView.findViewById(R.id.aisleInput);
+
+        RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
+        RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
+        RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
+        toCupboard.setChecked(true);
+
+        AlertDialog dialog = builder.create();
+
+        ((Button) dialogView.findViewById(R.id.buttonSend)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("button", "pushed" + description + item_name);
-
+                String targetBasket = toList.isChecked() ? "2" : toBasket.isChecked() ? "3" : "1";
+                try {
+                    String url = Constants.SHOPPING_URL + "?cmd=updR"
+                        + "&product_id=" + productId
+                        + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
+                        + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
+                        + "&newAisle=" + URLEncoder.encode(aisleInput.getText().toString(), "UTF-8")
+                        + "&curBasket=" + targetBasket
+                        + "&newPrice=0&newPriority="
+                        + "&displayBasket=1";
+                    new LoadURL(CupboardActivity.this).execute(new String[]{url});
+                } catch (java.io.UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                dialog.dismiss();
             }
         });
-        RadioButton rb = (RadioButton) v.findViewById(R.id.toCupboardRadioButton);
 
-        View.OnClickListener toCupboardRadioButtonListener = null;
-   //     rb.setOnClickListener(toCupboardRadioButtonListener);
-
-        toCupboardRadioButtonListener = new View.OnClickListener() {
-            public void onClick(View v) {
-                //Your Implementaions...
-                Log.d("radiobutton", "cupboard");
-            }
-        };
-
-
-        AlertDialog alert = alertDialog.create();
-        alert.show();
+        dialog.show();
     }
 }
 

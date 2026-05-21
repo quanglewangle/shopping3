@@ -1,10 +1,18 @@
 package com.quanglewangle.peter.shoppingBeta;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.TextView;
+
+import java.net.URLEncoder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -75,6 +83,14 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
 //        adapter.update(products);
         ((BaseAdapter) adapter).notifyDataSetChanged();
         getListView().setSelectionFromTop(pos, 0);
+        getListView().setLongClickable(true);
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                showEditDialog(position);
+                return true;
+            }
+        });
     }
 
     protected void onListItemClick(ListView list, View v, int position, long id) {
@@ -85,6 +101,55 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         //    webrequest.doRequest("http://fimblefowl.co.uk/json?cmd=ubT&basket=2&product_id=" + o.get("id"));
         LoadURL loadUrl = new LoadURL(ListActivity.this);
         loadUrl.execute(new String[]{Constants.SHOPPING_URL+"?cmd=ubT&newBasket=3&product_id=" + o.get("id") + "&curBasket=2"});
+    }
+
+    private void showEditDialog(int position) {
+        HashMap<String, String> product = (HashMap<String, String>) this.getListAdapter().getItem(position);
+        String productId = product.get("id");
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_layout, null);
+        builder.setView(dialogView);
+
+        ((TextView) dialogView.findViewById(R.id.item_name)).setText(product.get("description"));
+
+        EditText descriptionInput = (EditText) dialogView.findViewById(R.id.descriptionInput);
+        descriptionInput.setText(product.get("description"));
+
+        EditText quantityInput = (EditText) dialogView.findViewById(R.id.noteInput);
+        quantityInput.setText(product.get("quantity"));
+
+        EditText aisleInput = (EditText) dialogView.findViewById(R.id.aisleInput);
+
+        RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
+        RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
+        RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
+        toList.setChecked(true);
+
+        AlertDialog dialog = builder.create();
+
+        ((Button) dialogView.findViewById(R.id.buttonSend)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String targetBasket = toCupboard.isChecked() ? "1" : toBasket.isChecked() ? "3" : "2";
+                try {
+                    String url = Constants.SHOPPING_URL + "?cmd=updR"
+                        + "&product_id=" + productId
+                        + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
+                        + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
+                        + "&newAisle=" + URLEncoder.encode(aisleInput.getText().toString(), "UTF-8")
+                        + "&curBasket=" + targetBasket
+                        + "&newPrice=0&newPriority="
+                        + "&displayBasket=2";
+                    new LoadURL(ListActivity.this).execute(new String[]{url});
+                } catch (java.io.UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
     }
 
 }
