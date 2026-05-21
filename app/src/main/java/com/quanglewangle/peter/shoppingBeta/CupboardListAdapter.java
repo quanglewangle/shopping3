@@ -52,6 +52,7 @@ public class CupboardListAdapter extends BaseAdapter {
 		TextView description;
 		TextView quantity;
 		TextView aisle;
+		View quickShopIndicator;
 	}
 
 	@Override
@@ -65,6 +66,7 @@ public class CupboardListAdapter extends BaseAdapter {
 	        holder.quantity = (TextView) convertView.findViewById(quantity);
 			holder.description = (TextView) convertView.findViewById(R.id.description);
 			holder.aisle = (TextView) convertView.findViewById(R.id.aisle);
+			holder.quickShopIndicator = convertView.findViewById(R.id.quickShopIndicator);
 
 			convertView.setTag(holder);
 		} else {
@@ -73,6 +75,8 @@ public class CupboardListAdapter extends BaseAdapter {
         holder.quantity.setText(products.get(position).get("quantity"));
 		holder.description.setText(products.get(position).get("description"));
 		holder.aisle.setText(products.get(position).get("aisle"));
+		boolean isQuickShop = "true".equals(products.get(position).get("quickShopMode"));
+		holder.quickShopIndicator.setVisibility(isQuickShop ? View.VISIBLE : View.INVISIBLE);
 
 		return convertView;
 	}
