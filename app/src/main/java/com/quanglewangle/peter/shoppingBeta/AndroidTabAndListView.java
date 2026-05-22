@@ -2,6 +2,8 @@ package com.quanglewangle.peter.shoppingBeta;
 
 import android.app.TabActivity;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +40,19 @@ public class AndroidTabAndListView extends TabActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        updateActionBarColor();
+    }
+
+    private void updateActionBarColor() {
+        if (getActionBar() != null) {
+            getActionBar().setBackgroundDrawable(new ColorDrawable(
+                isQuickShopMode() ? Color.parseColor("#4CAF50") : Color.parseColor("#333333")));
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.options_menu, menu);
         return true;
@@ -55,6 +70,7 @@ public class AndroidTabAndListView extends TabActivity {
             boolean newState = !item.isChecked();
             item.setChecked(newState);
             setQuickShopMode(newState);
+            updateActionBarColor();
             return true;
         }
         if (item.getItemId() == R.id.clear_all_quick_shop) {

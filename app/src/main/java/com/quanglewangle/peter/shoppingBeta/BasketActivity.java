@@ -131,7 +131,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         aisleInput.setText(product.get("aisle"));
 
         CheckBox quickShopCheckBox = (CheckBox) dialogView.findViewById(R.id.checkBox);
-        quickShopCheckBox.setChecked("true".equals(product.get("quickShopMode")));
+        quickShopCheckBox.setChecked(isQuickShopMode() || "true".equals(product.get("quickShopMode")));
 
         RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
         RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
