@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 android {
-    compileSdkVersion 29
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.quanglewangle.shoppingBeta"
         minSdkVersion 23
-        targetSdkVersion 29
+        targetSdkVersion 33
         multiDexEnabled true
     }
     buildTypes {
