@@ -1,6 +1,7 @@
 package com.quanglewangle.peter.shoppingBeta;
 
 import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -30,6 +31,14 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
     ArrayList<HashMap<String, String>> products;
     int pos;
 
+    private final SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+        (prefs, key) -> {
+            if (Constants.PREF_QUICK_SHOP_MODE.equals(key)) {
+                String url = isQuickShopMode() ? Constants.DUMP_LIST_QUICK_SHOP : Constants.DUMP_LIST;
+                new LoadURL(ListActivity.this).execute(new String[]{url});
+            }
+        };
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
@@ -37,9 +46,18 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
     @Override
     protected void onResume() {
         super.onResume();
+        getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
+                .registerOnSharedPreferenceChangeListener(prefListener);
         setContentView(R.layout.cupboard_list);
         String url = isQuickShopMode() ? Constants.DUMP_LIST_QUICK_SHOP : Constants.DUMP_LIST;
         new LoadURL(ListActivity.this).execute(new String[]{url});
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
+                .unregisterOnSharedPreferenceChangeListener(prefListener);
     }
 
     @Override
