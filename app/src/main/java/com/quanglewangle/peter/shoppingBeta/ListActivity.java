@@ -179,7 +179,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
                         + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
                         + "&curBasket=" + targetBasket
                         + "&newPrice=0&newPriority="
-                        + "&newQuickShop=" + (quickShopCheckBox.isChecked() ? "1" : "0")
+                        + "&newQuickShop=" + (toCupboard.isChecked() ? "0" : quickShopCheckBox.isChecked() ? "1" : "0")
                         + "&displayBasket=2";
                     new LoadURL(ListActivity.this).execute(new String[]{url});
                 } catch (java.io.UnsupportedEncodingException e) {
