@@ -67,12 +67,13 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         lastKnownModified = "";
         setContentView(R.layout.cupboard_list);
         reloadList();
+        pollHandler.removeCallbacks(pollRunnable);
         pollHandler.postDelayed(pollRunnable, 3000);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         pollHandler.removeCallbacks(pollRunnable);
     }
 

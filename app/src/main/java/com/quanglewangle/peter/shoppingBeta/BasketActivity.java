@@ -59,12 +59,13 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         lastKnownModified = "";
         setContentView(R.layout.basket_list);
         reloadList();
+        pollHandler.removeCallbacks(pollRunnable);
         pollHandler.postDelayed(pollRunnable, 3000);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
         pollHandler.removeCallbacks(pollRunnable);
     }
 
