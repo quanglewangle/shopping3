@@ -3,6 +3,7 @@ package com.quanglewangle.peter.shoppingBeta;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,15 +32,40 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
     ArrayList<HashMap<String, String>> products;
     int pos;
 
+    private final Handler pollHandler = new Handler();
+    private String lastKnownModified = "";
+    private Runnable pollRunnable;
+
+    private void reloadList() {
+        new LoadURL(BasketActivity.this).execute(new String[]{Constants.DUMP_BASKET});
+    }
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        pollRunnable = () -> {
+            new LoadURL(result -> {
+                if (!lastKnownModified.isEmpty() && !result.equals(lastKnownModified)) {
+                    reloadList();
+                }
+                lastKnownModified = result;
+                pollHandler.postDelayed(pollRunnable, 3000);
+            }).execute(new String[]{Constants.LAST_MODIFIED_URL});
+        };
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        lastKnownModified = "";
         setContentView(R.layout.basket_list);
-        new LoadURL(BasketActivity.this).execute(new String[]{Constants.DUMP_BASKET});
+        reloadList();
+        pollHandler.postDelayed(pollRunnable, 3000);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        pollHandler.removeCallbacks(pollRunnable);
     }
 
     @Override
@@ -107,7 +133,7 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
         pos = list.getFirstVisiblePosition();
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
         new LoadURL(BasketActivity.this).execute(new String[]{
-            Constants.SHOPPING_URL + "?cmd=ubT&newBasket=1&product_id=" + o.get("id") + "&curBasket=3"
+            Constants.SHOPPING_URL + "?cmd=ubT&newBasket=1&product_id=" + o.get("id") + "&curBasket=3&setQuickShop=0"
         });
     }
 
