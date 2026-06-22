@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Shopping list / paper, rotated -12 degrees, peeking behind basket -->
+    <group
+        android:pivotX="46"
+        android:pivotY="48"
+        android:rotation="-12">
+        <path
+            android:fillColor="#FFFDE7"
+            android:pathData="M28,22 H64 Q67,22 67,25 V71 Q67,74 64,74 H28 Q25,74 25,71 V25 Q25,22 28,22 Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M31,33 H61 V36 H31 Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M31,41 H61 V44 H31 Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M31,49 H53 V52 H31 Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M31,57 H57 V60 H31 Z"/>
+    </group>
+
+    <!-- Basket handle -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D4A57A"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M28,62 Q54,42 80,62"/>
+
+    <!-- Basket body -->
+    <path
+        android:fillColor="#D4A57A"
+        android:pathData="M24,62 L84,62 L80,84 L28,84 Z"/>
+
+    <!-- Basket inner vertical wires -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#B8895A"
+        android:strokeWidth="1.5"
+        android:pathData="M42,62 L40,84"/>
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#B8895A"
+        android:strokeWidth="1.5"
+        android:pathData="M54,62 L54,84"/>
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#B8895A"
+        android:strokeWidth="1.5"
+        android:pathData="M66,62 L68,84"/>
+
+    <!-- Basket inner horizontal wire -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#B8895A"
+        android:strokeWidth="1.5"
+        android:pathData="M25,73 L83,73"/>
+
+    <!-- Left wheel -->
+    <path
+        android:fillColor="#D4A57A"
+        android:pathData="M31,85 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+
+    <!-- Right wheel -->
+    <path
+        android:fillColor="#D4A57A"
+        android:pathData="M67,85 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0"/>
+
+</vector>
