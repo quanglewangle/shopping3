@@ -4,9 +4,12 @@ import android.app.TabActivity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
 
@@ -37,6 +40,23 @@ public class AndroidTabAndListView extends TabActivity {
         tabHost.addTab(inboxSpec);
         tabHost.addTab(outboxSpec);
         tabHost.addTab(profileSpec);
+
+        // Android 16+ forces edge-to-edge and ignores windowActionBarOverlay, so the
+        // action bar overlays the tab widget. Apply top padding manually to push tabs down.
+        if (Build.VERSION.SDK_INT >= 36) {
+            LinearLayout tabsRoot = (LinearLayout) tabHost.getChildAt(0);
+            tabsRoot.setOnApplyWindowInsetsListener((v, insets) -> {
+                TypedValue tv = new TypedValue();
+                int actionBarHeight = 0;
+                if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                    actionBarHeight = TypedValue.complexToDimensionPixelSize(
+                            tv.data, getResources().getDisplayMetrics());
+                }
+                v.setPadding(0, insets.getSystemWindowInsetTop() + actionBarHeight, 0, 0);
+                return insets;
+            });
+            tabsRoot.requestApplyInsets();
+        }
     }
 
     @Override
