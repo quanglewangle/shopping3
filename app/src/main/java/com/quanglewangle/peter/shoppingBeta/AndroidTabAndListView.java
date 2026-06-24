@@ -70,7 +70,11 @@ public class AndroidTabAndListView extends TabActivity {
             boolean qsm = isQuickShopMode();
             getActionBar().setBackgroundDrawable(new ColorDrawable(
                 qsm ? Color.parseColor("#4CAF50") : Color.parseColor("#333333")));
-            getActionBar().setTitle(qsm ? "Shopping5  Quick Shop" : "Shopping5");
+            String version = "";
+            try {
+                version = " v" + getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            } catch (Exception ignored) {}
+            getActionBar().setTitle(qsm ? "Shopping  Quick Shop" + version : "Shopping" + version);
         }
     }
 
