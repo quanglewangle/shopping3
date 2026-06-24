@@ -7,6 +7,8 @@ import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -38,6 +40,8 @@ import java.util.Map;
 public class CupboardActivity extends ListActivity implements AsyncTaskCompleteListener<String> {
     CupboardListAdapter adapter;
     ArrayList<HashMap<String, String>> products;
+    ArrayList<HashMap<String, String>> allProducts;
+    EditText searchBox;
     int pos;
 
     private final Handler pollHandler = new Handler();
@@ -66,6 +70,14 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         super.onResume();
         lastKnownModified = "";
         setContentView(R.layout.cupboard_list);
+        searchBox = (EditText) findViewById(R.id.searchBox);
+        searchBox.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                applyFilter(s.toString());
+            }
+        });
         reloadList();
         pollHandler.removeCallbacks(pollRunnable);
         pollHandler.postDelayed(pollRunnable, 3000);
@@ -131,9 +143,8 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
             e.printStackTrace();
         }
 
-        adapter = new CupboardListAdapter(this, products);
-        setListAdapter(adapter);
-        ((BaseAdapter) adapter).notifyDataSetChanged();
+        allProducts = products;
+        applyFilter(searchBox != null ? searchBox.getText().toString() : "");
         getListView().setSelectionFromTop(pos, 0);
         getListView().setLongClickable(true);
 
@@ -144,6 +155,26 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                 return true;
             }
         });
+    }
+
+    private void applyFilter(String query) {
+        if (allProducts == null) return;
+        ArrayList<HashMap<String, String>> filtered;
+        if (query.trim().isEmpty()) {
+            filtered = allProducts;
+        } else {
+            filtered = new ArrayList<>();
+            String q = query.toLowerCase();
+            for (HashMap<String, String> p : allProducts) {
+                String desc = p.get("description");
+                if (desc != null && desc.toLowerCase().contains(q)) {
+                    filtered.add(p);
+                }
+            }
+        }
+        adapter = new CupboardListAdapter(this, filtered);
+        setListAdapter(adapter);
+        ((BaseAdapter) adapter).notifyDataSetChanged();
     }
 
     protected void onListItemClick(ListView list, View v, int position, long id) {

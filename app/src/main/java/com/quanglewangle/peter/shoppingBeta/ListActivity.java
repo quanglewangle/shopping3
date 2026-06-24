@@ -68,7 +68,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         lastKnownModified = "";
         getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
                 .registerOnSharedPreferenceChangeListener(prefListener);
-        setContentView(R.layout.cupboard_list);
+        setContentView(R.layout.list_list);
         reloadList();
         pollHandler.removeCallbacks(pollRunnable);
         pollHandler.postDelayed(pollRunnable, 3000);

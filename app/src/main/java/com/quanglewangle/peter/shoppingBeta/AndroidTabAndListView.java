@@ -43,19 +43,21 @@ public class AndroidTabAndListView extends TabActivity {
 
         // Android 16+ forces edge-to-edge and ignores windowActionBarOverlay, so the
         // action bar overlays the tab widget. Apply top padding manually to push tabs down.
-        if (Build.VERSION.SDK_INT >= 36) {
+        if (Build.VERSION.SDK_INT >= 35) {
             LinearLayout tabsRoot = (LinearLayout) tabHost.getChildAt(0);
-            tabsRoot.setOnApplyWindowInsetsListener((v, insets) -> {
-                TypedValue tv = new TypedValue();
-                int actionBarHeight = 0;
-                if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-                    actionBarHeight = TypedValue.complexToDimensionPixelSize(
-                            tv.data, getResources().getDisplayMetrics());
-                }
-                v.setPadding(0, insets.getSystemWindowInsetTop() + actionBarHeight, 0, 0);
-                return insets;
-            });
-            tabsRoot.requestApplyInsets();
+            TypedValue tv = new TypedValue();
+            int actionBarHeight = 0;
+            if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                actionBarHeight = TypedValue.complexToDimensionPixelSize(
+                        tv.data, getResources().getDisplayMetrics());
+            }
+            int statusBarHeight = 0;
+            int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resId > 0) {
+                statusBarHeight = getResources().getDimensionPixelSize(resId);
+            }
+            final int topPadding = statusBarHeight + actionBarHeight;
+            tabsRoot.post(() -> tabsRoot.setPadding(0, topPadding, 0, 0));
         }
     }
 
