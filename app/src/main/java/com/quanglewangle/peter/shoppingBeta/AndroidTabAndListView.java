@@ -89,6 +89,7 @@ public class AndroidTabAndListView extends TabActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.quick_shop_mode).setChecked(isQuickShopMode());
+        menu.findItem(R.id.add_item).setVisible(getTabHost().getCurrentTab() == 0);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -103,6 +104,13 @@ public class AndroidTabAndListView extends TabActivity {
         }
         if (item.getItemId() == R.id.clear_all_quick_shop) {
             new LoadURL(result -> {}).execute(new String[]{Constants.CLEAR_ALL_QUICK_SHOP});
+            return true;
+        }
+        if (item.getItemId() == R.id.add_item) {
+            android.app.Activity current = getLocalActivityManager().getCurrentActivity();
+            if (current instanceof CupboardActivity) {
+                ((CupboardActivity) current).showAddItemDialog();
+            }
             return true;
         }
         return super.onOptionsItemSelected(item);

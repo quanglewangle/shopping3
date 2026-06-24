@@ -7,4 +7,8 @@
     <item
         android:id="@+id/clear_all_quick_shop"
         android:title="Clear all Quick Shop" />
+    <item
+        android:id="@+id/add_item"
+        android:title="Add item"
+        android:showAsAction="never" />
 </menu>

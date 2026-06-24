@@ -5,9 +5,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -21,11 +23,14 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
 
 import java.net.URLEncoder;
 
@@ -109,7 +114,106 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
             setQuickShopMode(newState);
             return true;
         }
+        if (item.getItemId() == R.id.add_item) {
+            showAddItemDialog();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void showAddItemDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad * 2, pad, pad * 2, pad);
+
+        EditText input = new EditText(this);
+        input.setHint("Description");
+        layout.addView(input);
+
+        TextView warningText = new TextView(this);
+        warningText.setTextColor(Color.rgb(180, 60, 0));
+        warningText.setVisibility(View.GONE);
+        layout.addView(warningText);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Add item to cupboard")
+                .setView(layout)
+                .setPositiveButton("Add", null)
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        input.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                List<String> similar = findSimilar(s.toString());
+                if (similar.isEmpty()) {
+                    warningText.setVisibility(View.GONE);
+                } else {
+                    warningText.setText("Similar items: " + TextUtils.join(", ", similar));
+                    warningText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String desc = input.getText().toString().trim();
+            if (desc.isEmpty()) return;
+            List<String> similar = findSimilar(desc);
+            if (!similar.isEmpty()) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Similar items exist")
+                        .setMessage("Already in cupboard:\n• " + TextUtils.join("\n• ", similar) + "\n\nAdd anyway?")
+                        .setPositiveButton("Add anyway", (d, w) -> { addNewItem(desc); dialog.dismiss(); })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            } else {
+                addNewItem(desc);
+                dialog.dismiss();
+            }
+        });
+    }
+
+    private void addNewItem(String description) {
+        try {
+            String url = Constants.SHOPPING_URL + "?cmd=insertNew&barcode=&description="
+                    + java.net.URLEncoder.encode(description, "UTF-8");
+            new LoadURL(result -> reloadList()).execute(new String[]{url});
+        } catch (java.io.UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<String> findSimilar(String query) {
+        List<String> results = new ArrayList<>();
+        if (allProducts == null || query.trim().length() < 2) return results;
+        String q = query.toLowerCase().trim();
+        for (HashMap<String, String> p : allProducts) {
+            String desc = p.get("description");
+            if (desc == null) continue;
+            String d = desc.toLowerCase().trim();
+            if (similarity(q, d) >= 0.65f || d.contains(q) || q.contains(d)) {
+                results.add(desc.trim());
+            }
+        }
+        return results;
+    }
+
+    private float similarity(String a, String b) {
+        if (a.isEmpty() || b.isEmpty()) return 0;
+        int[][] dp = new int[a.length() + 1][b.length() + 1];
+        for (int i = 0; i <= a.length(); i++) dp[i][0] = i;
+        for (int j = 0; j <= b.length(); j++) dp[0][j] = j;
+        for (int i = 1; i <= a.length(); i++) {
+            for (int j = 1; j <= b.length(); j++) {
+                dp[i][j] = a.charAt(i - 1) == b.charAt(j - 1)
+                        ? dp[i - 1][j - 1]
+                        : 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
+            }
+        }
+        return 1.0f - (float) dp[a.length()][b.length()] / Math.max(a.length(), b.length());
     }
 
     @Override
