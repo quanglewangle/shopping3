@@ -5,8 +5,10 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.inputmethod.InputMethodManager;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -89,9 +91,23 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        hideKeyboard();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         pollHandler.removeCallbacks(pollRunnable);
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        View focus = getCurrentFocus();
+        if (imm != null && focus != null) {
+            imm.hideSoftInputFromWindow(focus.getWindowToken(), 0);
+        }
     }
 
     @Override
@@ -283,6 +299,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
 
     protected void onListItemClick(ListView list, View v, int position, long id) {
         super.onListItemClick(list, v, position, id);
+        hideKeyboard();
         pos = list.getFirstVisiblePosition();
 
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
