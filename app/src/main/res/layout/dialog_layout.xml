@@ -132,12 +132,26 @@
 
         </RadioGroup>
 
-        <CheckBox
-            android:id="@+id/checkBox"
-            android:layout_width="180dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="72dp"
-            android:text="Quick Shop" />
+            android:orientation="vertical">
+
+            <CheckBox
+                android:id="@+id/checkBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="Quick Shop" />
+
+            <CheckBox
+                android:id="@+id/nectarCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="Nectar voucher" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

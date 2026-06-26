@@ -255,6 +255,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                 map.put("quickShopMode", obj.optString("quickShop"));
                 map.put("id", obj.getString("id"));
                 map.put("aisle", obj.optString("aisle"));
+                map.put("nectar", obj.optString("nectar", "false"));
 
                 products.add(map);
             }
@@ -335,6 +336,9 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         CheckBox quickShopCheckBox = (CheckBox) dialogView.findViewById(R.id.checkBox);
         quickShopCheckBox.setChecked(isQuickShopMode() || "true".equals(product.get("quickShopMode")));
 
+        CheckBox nectarCheckBox = (CheckBox) dialogView.findViewById(R.id.nectarCheckBox);
+        nectarCheckBox.setChecked("true".equals(product.get("nectar")));
+
         RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
         RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
         RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
@@ -355,6 +359,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                         + "&curBasket=" + targetBasket
                         + "&newPrice=0&newPriority="
                         + "&newQuickShop=" + (quickShopCheckBox.isChecked() ? "1" : "0")
+                        + "&newNectar=" + (toBasket.isChecked() ? "0" : nectarCheckBox.isChecked() ? "1" : "0")
                         + "&displayBasket=1";
                     new LoadURL(CupboardActivity.this).execute(new String[]{url});
                 } catch (java.io.UnsupportedEncodingException e) {

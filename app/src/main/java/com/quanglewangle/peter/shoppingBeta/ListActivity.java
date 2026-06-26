@@ -129,6 +129,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
                 map.put("quantity", obj.getString("quantity"));
                 map.put("aisle", obj.optString("aisle"));
                 map.put("quickShopMode", obj.optString("quickShop"));
+                map.put("nectar", obj.optString("nectar", "false"));
 
                 products.add(map);
             }
@@ -187,6 +188,9 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         CheckBox quickShopCheckBox = (CheckBox) dialogView.findViewById(R.id.checkBox);
         quickShopCheckBox.setChecked(isQuickShopMode() || "true".equals(product.get("quickShopMode")));
 
+        CheckBox nectarCheckBox = (CheckBox) dialogView.findViewById(R.id.nectarCheckBox);
+        nectarCheckBox.setChecked("true".equals(product.get("nectar")));
+
         RadioButton toCupboard = (RadioButton) dialogView.findViewById(R.id.toCupboardRadioButton);
         RadioButton toList = (RadioButton) dialogView.findViewById(R.id.toListRadioButton);
         RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
@@ -207,6 +211,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
                         + "&curBasket=" + targetBasket
                         + "&newPrice=0&newPriority="
                         + "&newQuickShop=" + (toCupboard.isChecked() ? "0" : quickShopCheckBox.isChecked() ? "1" : "0")
+                        + "&newNectar=" + (toBasket.isChecked() ? "0" : nectarCheckBox.isChecked() ? "1" : "0")
                         + "&displayBasket=2";
                     new LoadURL(ListActivity.this).execute(new String[]{url});
                 } catch (java.io.UnsupportedEncodingException e) {
