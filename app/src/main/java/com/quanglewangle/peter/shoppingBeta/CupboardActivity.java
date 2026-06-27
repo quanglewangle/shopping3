@@ -405,7 +405,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
 
     public void processCouponPhoto(File cameraImageFile) {
         if (cameraImageFile == null || !cameraImageFile.exists()) return;
-        Toast.makeText(this, "Reading coupon...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Reading voucher...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inSampleSize = 2;
@@ -422,12 +422,18 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
             }
             Frame frame = new Frame.Builder().setBitmap(bitmap).build();
             SparseArray<TextBlock> blocks = recognizer.detect(frame);
-            StringBuilder sb = new StringBuilder();
+            StringBuilder orangeText = new StringBuilder();
+            StringBuilder debugSb = new StringBuilder();
             for (int i = 0; i < blocks.size(); i++) {
-                sb.append(blocks.valueAt(i).getValue()).append("\n");
+                TextBlock block = blocks.valueAt(i);
+                String text = block.getValue();
+                android.graphics.Rect bounds = block.getBoundingBox();
+                boolean orange = bounds != null && isOrangeText(bitmap, bounds);
+                debugSb.append(orange ? "[orange] " : "[     ] ").append(text).append("\n");
+                if (orange) orangeText.append(text).append("\n");
             }
             recognizer.release();
-            List<String> candidates = extractProductCandidates(sb.toString());
+            List<String> candidates = extractProductCandidates(orangeText.toString());
             List<String> matchedDescs = new ArrayList<>();
             List<String> matchedIds = new ArrayList<>();
             if (allProducts != null) {
@@ -442,25 +448,70 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                     }
                 }
             }
+            debugSb.append("\n--- candidates ---\n");
+            if (candidates.isEmpty()) debugSb.append("(none)\n");
+            for (String c : candidates) debugSb.append("  ").append(c).append("\n");
+            debugSb.append("\n--- allProducts ---\n");
+            debugSb.append(allProducts == null ? "(null)" : allProducts.size() + " items").append("\n");
+            debugSb.append("\n--- matches ---\n");
+            if (matchedDescs.isEmpty()) debugSb.append("(none)\n");
+            for (String m : matchedDescs) debugSb.append("  ").append(m).append("\n");
             final List<String> finalDescs = matchedDescs;
             final List<String> finalIds = matchedIds;
             final List<String> finalCandidates = candidates;
-            runOnUiThread(() -> showCouponResultDialog(finalCandidates, finalDescs, finalIds));
+            final String debug = debugSb.toString();
+            runOnUiThread(() -> {
+                android.widget.ScrollView sv = new android.widget.ScrollView(this);
+                android.widget.TextView tv = new android.widget.TextView(this);
+                tv.setText(debug.isEmpty() ? "(nothing read)" : debug);
+                tv.setPadding(24, 16, 24, 16);
+                tv.setTypeface(android.graphics.Typeface.MONOSPACE);
+                sv.addView(tv);
+                new AlertDialog.Builder(this)
+                    .setTitle("OCR output")
+                    .setView(sv)
+                    .setPositiveButton("Match", (d, w) -> showCouponResultDialog(finalCandidates, finalDescs, finalIds))
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            });
         }).start();
+    }
+
+    private boolean isOrangeText(Bitmap bitmap, android.graphics.Rect bounds) {
+        int orangeCount = 0;
+        int total = 0;
+        int step = Math.max(1, Math.min(bounds.width(), bounds.height()) / 20);
+        for (int x = Math.max(0, bounds.left); x < Math.min(bitmap.getWidth(), bounds.right); x += step) {
+            for (int y = Math.max(0, bounds.top); y < Math.min(bitmap.getHeight(), bounds.bottom); y += step) {
+                int pixel = bitmap.getPixel(x, y);
+                int r = android.graphics.Color.red(pixel);
+                int g = android.graphics.Color.green(pixel);
+                int b = android.graphics.Color.blue(pixel);
+                total++;
+                if (r > 160 && b < 80 && r > g) orangeCount++;
+            }
+        }
+        return total > 0 && (float) orangeCount / total > 0.03f;
     }
 
     private List<String> extractProductCandidates(String text) {
         List<String> candidates = new ArrayList<>();
         String[] skipWords = {"save", "off", "when", "buy", "valid", "expire", "scan",
-            "checkout", "barcode", "sainsbury", "offer", "until", "coupon", "voucher",
-            "points", "nectar", "price", "total", "selected", "spend", "purchase"};
+            "checkout", "barcode", "sainsbury", "offer", "until",
+            "price", "total", "spend", "purchase"};
         for (String line : text.split("\n")) {
             String trimmed = line.trim();
             if (trimmed.length() < 4 || trimmed.length() > 70) continue;
             if (trimmed.matches(".*[£$%@].*")) continue;
             if (trimmed.matches("[\\d\\s/.,\\-]+")) continue;
             String lower = trimmed.toLowerCase();
-            if (lower.startsWith("by sainsbury")) continue;
+            if (lower.startsWith("by sainsbury")) {
+                int spaceIdx = trimmed.indexOf(' ', 3);
+                spaceIdx = trimmed.indexOf(' ', spaceIdx + 1); // skip "by Sainsbury's"
+                if (spaceIdx < 0 || spaceIdx >= trimmed.length() - 1) continue;
+                trimmed = trimmed.substring(spaceIdx + 1).trim();
+                lower = trimmed.toLowerCase();
+            }
             if (lower.startsWith("on any ")) trimmed = trimmed.substring(7).trim();
             else if (lower.startsWith("on ")) trimmed = trimmed.substring(3).trim();
             lower = trimmed.toLowerCase();
