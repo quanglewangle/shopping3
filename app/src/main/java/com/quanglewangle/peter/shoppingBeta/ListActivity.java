@@ -156,6 +156,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         pos = list.getFirstVisiblePosition();
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
         String productId = (String) o.get("id");
+        String description = (String) o.get("description");
         String url;
         if (isQuickShopMode()) {
             url = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=3&product_id=" + productId
@@ -163,7 +164,12 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         } else {
             url = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=3&product_id=" + productId + "&curBasket=2";
         }
-        new LoadURL(ListActivity.this).execute(new String[]{url});
+        final String finalUrl = url;
+        new android.app.AlertDialog.Builder(this)
+                .setMessage("Move \"" + description.trim() + "\" to basket?")
+                .setPositiveButton("Move", (d, w) -> new LoadURL(ListActivity.this).execute(new String[]{finalUrl}))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void showEditDialog(int position) {
