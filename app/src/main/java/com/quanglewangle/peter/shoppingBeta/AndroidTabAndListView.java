@@ -1,22 +1,32 @@
 package com.quanglewangle.peter.shoppingBeta;
 
+import android.Manifest;
 import android.app.TabActivity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
+import androidx.core.content.FileProvider;
+import java.io.File;
 
 public class AndroidTabAndListView extends TabActivity {
     private static final String INBOX_SPEC = "Cupboard";
     private static final String OUTBOX_SPEC = "List";
     private static final String PROFILE_SPEC = "Basket";
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_CAMERA_PERMISSION = 2;
+    private File cameraImageFile;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -92,7 +102,6 @@ public class AndroidTabAndListView extends TabActivity {
         boolean onCupboard = getTabHost().getCurrentTab() == 0;
         menu.findItem(R.id.add_item).setVisible(onCupboard);
         menu.findItem(R.id.scan_coupon).setVisible(onCupboard);
-        menu.findItem(R.id.clear_coupon).setVisible(onCupboard);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -117,20 +126,46 @@ public class AndroidTabAndListView extends TabActivity {
             return true;
         }
         if (item.getItemId() == R.id.scan_coupon) {
-            android.app.Activity current = getLocalActivityManager().getCurrentActivity();
-            if (current instanceof CupboardActivity) {
-                ((CupboardActivity) current).showCouponScanner();
-            }
-            return true;
-        }
-        if (item.getItemId() == R.id.clear_coupon) {
-            android.app.Activity current = getLocalActivityManager().getCurrentActivity();
-            if (current instanceof CupboardActivity) {
-                ((CupboardActivity) current).clearCouponHighlights();
-            }
+            checkAndLaunchCamera();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void checkAndLaunchCamera() {
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            launchCamera();
+        } else {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_CAMERA_PERMISSION && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            launchCamera();
+        }
+    }
+
+    private void launchCamera() {
+        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        cameraImageFile = new File(dir, "coupon.jpg");
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", cameraImageFile);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            android.app.Activity current = getLocalActivityManager().getCurrentActivity();
+            if (current instanceof CupboardActivity) {
+                ((CupboardActivity) current).processCouponPhoto(cameraImageFile);
+            }
+        }
     }
 
     private boolean isQuickShopMode() {

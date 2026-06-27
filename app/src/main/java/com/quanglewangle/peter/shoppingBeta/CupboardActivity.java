@@ -5,18 +5,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
-import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import androidx.core.content.FileProvider;
 import android.util.SparseArray;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ProgressBar;
@@ -26,8 +19,6 @@ import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import java.io.File;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -70,9 +61,6 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     EditText searchBox;
     int pos;
     private ProgressBar progressBar;
-    private File cameraImageFile;
-    private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private static final int REQUEST_CAMERA_PERMISSION = 2;
 
     private final Handler pollHandler = new Handler();
     private final Runnable showSpinnerRunnable = () -> {
@@ -298,7 +286,6 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                 map.put("id", obj.getString("id"));
                 map.put("aisle", obj.optString("aisle"));
                 map.put("nectar", obj.optString("nectar", "false"));
-                map.put("coupon", getCouponIds().contains(obj.getString("id")) ? "true" : "false");
 
                 products.add(map);
             }
@@ -416,40 +403,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         dialog.show();
     }
 
-    public void showCouponScanner() {
-        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-            launchCamera();
-        } else {
-            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            launchCamera();
-        }
-    }
-
-    private void launchCamera() {
-        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        cameraImageFile = new File(dir, "coupon.jpg");
-        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", cameraImageFile);
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            processCouponPhoto();
-        }
-    }
-
-    private void processCouponPhoto() {
+    public void processCouponPhoto(File cameraImageFile) {
         if (cameraImageFile == null || !cameraImageFile.exists()) return;
         Toast.makeText(this, "Reading coupon...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
@@ -522,9 +476,14 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         String a = couponLine.toLowerCase().trim();
         String b = description.toLowerCase().trim();
         if (similarity(a, b) >= 0.5f) return true;
-        String[] words = a.split("\\s+");
+        if (b.contains(a) || a.contains(b)) return true;
+        // any word of 5+ chars from the coupon line appearing in the description (search logic)
+        for (String word : a.split("\\s+")) {
+            if (word.length() >= 5 && b.contains(word)) return true;
+        }
+        // or 2+ shorter words overlapping
         int matches = 0;
-        for (String word : words) {
+        for (String word : a.split("\\s+")) {
             if (word.length() >= 4 && b.contains(word)) matches++;
         }
         return matches >= 2;
@@ -533,8 +492,8 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     private void showCouponResultDialog(List<String> candidates, List<String> matchedDescs, List<String> matchedIds) {
         if (matchedDescs.isEmpty()) {
             String msg = candidates.isEmpty()
-                ? "Could not extract any product names from the coupon."
-                : "No cupboard items matched the coupon.\n\nLines found:\n• " + TextUtils.join("\n• ", candidates);
+                ? "Could not extract any product names from the voucher."
+                : "No cupboard items matched the voucher.\n\nLines found:\n• " + TextUtils.join("\n• ", candidates);
             new AlertDialog.Builder(this)
                 .setTitle("No matches found")
                 .setMessage(msg)
@@ -543,36 +502,21 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
             return;
         }
         boolean[] checked = new boolean[matchedDescs.size()];
-        Arrays.fill(checked, true);
         CharSequence[] items = matchedDescs.toArray(new CharSequence[0]);
         new AlertDialog.Builder(this)
-            .setTitle("Cupboard items with coupons")
+            .setTitle("Mark as nectar voucher")
             .setMultiChoiceItems(items, checked, (dialog, which, isChecked) -> checked[which] = isChecked)
-            .setPositiveButton("Highlight", (dialog, which) -> {
-                Set<String> ids = getCouponIds();
+            .setPositiveButton("Mark", (dialog, which) -> {
                 for (int i = 0; i < matchedIds.size(); i++) {
-                    if (checked[i]) ids.add(matchedIds.get(i));
+                    if (checked[i]) {
+                        String url = Constants.SHOPPING_URL + "?cmd=setNectar&product_id=" + matchedIds.get(i) + "&value=1";
+                        new LoadURL(result -> {}).execute(new String[]{url});
+                    }
                 }
-                saveCouponIds(ids);
                 reloadList();
             })
             .setNegativeButton("Cancel", null)
             .show();
-    }
-
-    public void clearCouponHighlights() {
-        saveCouponIds(new HashSet<>());
-        reloadList();
-    }
-
-    private Set<String> getCouponIds() {
-        return new HashSet<>(getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
-            .getStringSet("coupon_product_ids", new HashSet<>()));
-    }
-
-    private void saveCouponIds(Set<String> ids) {
-        getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE).edit()
-            .putStringSet("coupon_product_ids", ids).apply();
     }
 
     private boolean isQuickShopMode() {

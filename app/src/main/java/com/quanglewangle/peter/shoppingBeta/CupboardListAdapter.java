@@ -78,14 +78,7 @@ public class CupboardListAdapter extends BaseAdapter {
 		boolean isQuickShop = "true".equals(products.get(position).get("quickShopMode"));
 		holder.quickShopIndicator.setVisibility(isQuickShop ? View.VISIBLE : View.INVISIBLE);
 		boolean isNectar = "true".equals(products.get(position).get("nectar"));
-		boolean isCoupon = "true".equals(products.get(position).get("coupon"));
-		if (isCoupon) {
-			convertView.setBackgroundColor(0xFFFFF9C4);
-		} else if (isNectar) {
-			convertView.setBackgroundColor(0xFFFFE0B2);
-		} else {
-			convertView.setBackgroundColor(0x00000000);
-		}
+		convertView.setBackgroundColor(isNectar ? 0xFFFFE0B2 : 0x00000000);
 
 		return convertView;
 	}

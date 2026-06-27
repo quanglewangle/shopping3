@@ -15,8 +15,4 @@
         android:id="@+id/scan_coupon"
         android:title="Scan coupon"
         android:showAsAction="never" />
-    <item
-        android:id="@+id/clear_coupon"
-        android:title="Clear coupon highlights"
-        android:showAsAction="never" />
 </menu>
