@@ -460,6 +460,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
             if (trimmed.matches(".*[£$%@].*")) continue;
             if (trimmed.matches("[\\d\\s/.,\\-]+")) continue;
             String lower = trimmed.toLowerCase();
+            if (lower.startsWith("by sainsbury")) continue;
             if (lower.startsWith("on any ")) trimmed = trimmed.substring(7).trim();
             else if (lower.startsWith("on ")) trimmed = trimmed.substring(3).trim();
             lower = trimmed.toLowerCase();
