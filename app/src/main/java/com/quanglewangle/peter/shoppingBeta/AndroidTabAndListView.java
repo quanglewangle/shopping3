@@ -89,7 +89,10 @@ public class AndroidTabAndListView extends TabActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.quick_shop_mode).setChecked(isQuickShopMode());
-        menu.findItem(R.id.add_item).setVisible(getTabHost().getCurrentTab() == 0);
+        boolean onCupboard = getTabHost().getCurrentTab() == 0;
+        menu.findItem(R.id.add_item).setVisible(onCupboard);
+        menu.findItem(R.id.scan_coupon).setVisible(onCupboard);
+        menu.findItem(R.id.clear_coupon).setVisible(onCupboard);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -110,6 +113,20 @@ public class AndroidTabAndListView extends TabActivity {
             android.app.Activity current = getLocalActivityManager().getCurrentActivity();
             if (current instanceof CupboardActivity) {
                 ((CupboardActivity) current).showAddItemDialog();
+            }
+            return true;
+        }
+        if (item.getItemId() == R.id.scan_coupon) {
+            android.app.Activity current = getLocalActivityManager().getCurrentActivity();
+            if (current instanceof CupboardActivity) {
+                ((CupboardActivity) current).showCouponScanner();
+            }
+            return true;
+        }
+        if (item.getItemId() == R.id.clear_coupon) {
+            android.app.Activity current = getLocalActivityManager().getCurrentActivity();
+            if (current instanceof CupboardActivity) {
+                ((CupboardActivity) current).clearCouponHighlights();
             }
             return true;
         }

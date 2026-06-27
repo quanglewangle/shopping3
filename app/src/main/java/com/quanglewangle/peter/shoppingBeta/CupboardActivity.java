@@ -5,11 +5,29 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
+import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import androidx.core.content.FileProvider;
+import android.util.SparseArray;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ProgressBar;
+import android.widget.Toast;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -52,6 +70,9 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     EditText searchBox;
     int pos;
     private ProgressBar progressBar;
+    private File cameraImageFile;
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+    private static final int REQUEST_CAMERA_PERMISSION = 2;
 
     private final Handler pollHandler = new Handler();
     private final Runnable showSpinnerRunnable = () -> {
@@ -277,6 +298,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                 map.put("id", obj.getString("id"));
                 map.put("aisle", obj.optString("aisle"));
                 map.put("nectar", obj.optString("nectar", "false"));
+                map.put("coupon", getCouponIds().contains(obj.getString("id")) ? "true" : "false");
 
                 products.add(map);
             }
@@ -392,6 +414,165 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         });
 
         dialog.show();
+    }
+
+    public void showCouponScanner() {
+        if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            launchCamera();
+        } else {
+            requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_CAMERA_PERMISSION && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            launchCamera();
+        }
+    }
+
+    private void launchCamera() {
+        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        cameraImageFile = new File(dir, "coupon.jpg");
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", cameraImageFile);
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            processCouponPhoto();
+        }
+    }
+
+    private void processCouponPhoto() {
+        if (cameraImageFile == null || !cameraImageFile.exists()) return;
+        Toast.makeText(this, "Reading coupon...", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = 2;
+            Bitmap bitmap = BitmapFactory.decodeFile(cameraImageFile.getAbsolutePath(), opts);
+            if (bitmap == null) {
+                runOnUiThread(() -> Toast.makeText(this, "Could not read image", Toast.LENGTH_SHORT).show());
+                return;
+            }
+            TextRecognizer recognizer = new TextRecognizer.Builder(CupboardActivity.this).build();
+            if (!recognizer.isOperational()) {
+                runOnUiThread(() -> Toast.makeText(this, "OCR not ready yet, try again shortly", Toast.LENGTH_LONG).show());
+                recognizer.release();
+                return;
+            }
+            Frame frame = new Frame.Builder().setBitmap(bitmap).build();
+            SparseArray<TextBlock> blocks = recognizer.detect(frame);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < blocks.size(); i++) {
+                sb.append(blocks.valueAt(i).getValue()).append("\n");
+            }
+            recognizer.release();
+            List<String> candidates = extractProductCandidates(sb.toString());
+            List<String> matchedDescs = new ArrayList<>();
+            List<String> matchedIds = new ArrayList<>();
+            if (allProducts != null) {
+                for (String candidate : candidates) {
+                    for (HashMap<String, String> p : allProducts) {
+                        String desc = p.get("description");
+                        String id = p.get("id");
+                        if (desc != null && !matchedIds.contains(id) && couponMatches(candidate, desc.trim())) {
+                            matchedDescs.add(desc.trim());
+                            matchedIds.add(id);
+                        }
+                    }
+                }
+            }
+            final List<String> finalDescs = matchedDescs;
+            final List<String> finalIds = matchedIds;
+            final List<String> finalCandidates = candidates;
+            runOnUiThread(() -> showCouponResultDialog(finalCandidates, finalDescs, finalIds));
+        }).start();
+    }
+
+    private List<String> extractProductCandidates(String text) {
+        List<String> candidates = new ArrayList<>();
+        String[] skipWords = {"save", "off", "when", "buy", "valid", "expire", "scan",
+            "checkout", "barcode", "sainsbury", "offer", "until", "coupon", "voucher",
+            "points", "nectar", "price", "total", "selected", "spend", "purchase"};
+        for (String line : text.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.length() < 4 || trimmed.length() > 70) continue;
+            if (trimmed.matches(".*[£$%@].*")) continue;
+            if (trimmed.matches("[\\d\\s/.,\\-]+")) continue;
+            String lower = trimmed.toLowerCase();
+            if (lower.startsWith("on any ")) trimmed = trimmed.substring(7).trim();
+            else if (lower.startsWith("on ")) trimmed = trimmed.substring(3).trim();
+            lower = trimmed.toLowerCase();
+            boolean skip = false;
+            for (String word : skipWords) {
+                if (lower.contains(word)) { skip = true; break; }
+            }
+            if (!skip) candidates.add(trimmed);
+        }
+        return candidates;
+    }
+
+    private boolean couponMatches(String couponLine, String description) {
+        String a = couponLine.toLowerCase().trim();
+        String b = description.toLowerCase().trim();
+        if (similarity(a, b) >= 0.5f) return true;
+        String[] words = a.split("\\s+");
+        int matches = 0;
+        for (String word : words) {
+            if (word.length() >= 4 && b.contains(word)) matches++;
+        }
+        return matches >= 2;
+    }
+
+    private void showCouponResultDialog(List<String> candidates, List<String> matchedDescs, List<String> matchedIds) {
+        if (matchedDescs.isEmpty()) {
+            String msg = candidates.isEmpty()
+                ? "Could not extract any product names from the coupon."
+                : "No cupboard items matched the coupon.\n\nLines found:\n• " + TextUtils.join("\n• ", candidates);
+            new AlertDialog.Builder(this)
+                .setTitle("No matches found")
+                .setMessage(msg)
+                .setPositiveButton("OK", null)
+                .show();
+            return;
+        }
+        boolean[] checked = new boolean[matchedDescs.size()];
+        Arrays.fill(checked, true);
+        CharSequence[] items = matchedDescs.toArray(new CharSequence[0]);
+        new AlertDialog.Builder(this)
+            .setTitle("Cupboard items with coupons")
+            .setMultiChoiceItems(items, checked, (dialog, which, isChecked) -> checked[which] = isChecked)
+            .setPositiveButton("Highlight", (dialog, which) -> {
+                Set<String> ids = getCouponIds();
+                for (int i = 0; i < matchedIds.size(); i++) {
+                    if (checked[i]) ids.add(matchedIds.get(i));
+                }
+                saveCouponIds(ids);
+                reloadList();
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
+    }
+
+    public void clearCouponHighlights() {
+        saveCouponIds(new HashSet<>());
+        reloadList();
+    }
+
+    private Set<String> getCouponIds() {
+        return new HashSet<>(getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
+            .getStringSet("coupon_product_ids", new HashSet<>()));
+    }
+
+    private void saveCouponIds(Set<String> ids) {
+        getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE).edit()
+            .putStringSet("coupon_product_ids", ids).apply();
     }
 
     private boolean isQuickShopMode() {
