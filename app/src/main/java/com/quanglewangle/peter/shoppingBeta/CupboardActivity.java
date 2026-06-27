@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ProgressBar;
 import android.os.Handler;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -50,12 +51,30 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     ArrayList<HashMap<String, String>> allProducts;
     EditText searchBox;
     int pos;
+    private ProgressBar progressBar;
 
     private final Handler pollHandler = new Handler();
+    private final Runnable showSpinnerRunnable = () -> {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+    };
     private String lastKnownModified = "";
     private Runnable pollRunnable;
 
+    private void startSpinner() {
+        pollHandler.postDelayed(showSpinnerRunnable, 400);
+    }
+
+    private void stopSpinner() {
+        pollHandler.removeCallbacks(showSpinnerRunnable);
+        if (progressBar != null) progressBar.setVisibility(View.GONE);
+    }
+
     private void reloadList() {
+        startSpinner();
+        new LoadURL(CupboardActivity.this).execute(new String[]{Constants.DUMP_CUPBOARD});
+    }
+
+    private void reloadListSilent() {
         new LoadURL(CupboardActivity.this).execute(new String[]{Constants.DUMP_CUPBOARD});
     }
 
@@ -64,7 +83,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         pollRunnable = () -> {
             new LoadURL(result -> {
                 if (!lastKnownModified.isEmpty() && !result.equals(lastKnownModified)) {
-                    reloadList();
+                    reloadListSilent();
                 }
                 lastKnownModified = result;
                 pollHandler.postDelayed(pollRunnable, 3000);
@@ -77,6 +96,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         super.onResume();
         lastKnownModified = "";
         setContentView(R.layout.cupboard_list);
+        progressBar = findViewById(R.id.progressBar);
         searchBox = (EditText) findViewById(R.id.searchBox);
         searchBox.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -242,6 +262,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
 
     @Override
     public void onTaskComplete(String result) {
+        stopSpinner();
         products = new ArrayList<HashMap<String, String>>();
         try {
             JSONArray data_array = new JSONArray(result);
@@ -301,6 +322,7 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
     protected void onListItemClick(ListView list, View v, int position, long id) {
         super.onListItemClick(list, v, position, id);
         hideKeyboard();
+        startSpinner();
         pos = list.getFirstVisiblePosition();
 
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);

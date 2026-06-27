@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
@@ -31,12 +32,31 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
     CupboardListAdapter adapter;
     ArrayList<HashMap<String, String>> products;
     int pos;
+    private ProgressBar progressBar;
 
     private final Handler pollHandler = new Handler();
+    private final Runnable showSpinnerRunnable = () -> {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+    };
     private String lastKnownModified = "";
     private Runnable pollRunnable;
 
+    private void startSpinner() {
+        pollHandler.postDelayed(showSpinnerRunnable, 400);
+    }
+
+    private void stopSpinner() {
+        pollHandler.removeCallbacks(showSpinnerRunnable);
+        if (progressBar != null) progressBar.setVisibility(View.GONE);
+    }
+
     private void reloadList() {
+        startSpinner();
+        String url = isQuickShopMode() ? Constants.DUMP_LIST_QUICK_SHOP : Constants.DUMP_LIST;
+        new LoadURL(ListActivity.this).execute(new String[]{url});
+    }
+
+    private void reloadListSilent() {
         String url = isQuickShopMode() ? Constants.DUMP_LIST_QUICK_SHOP : Constants.DUMP_LIST;
         new LoadURL(ListActivity.this).execute(new String[]{url});
     }
@@ -54,7 +74,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         pollRunnable = () -> {
             new LoadURL(result -> {
                 if (!lastKnownModified.isEmpty() && !result.equals(lastKnownModified)) {
-                    reloadList();
+                    reloadListSilent();
                 }
                 lastKnownModified = result;
                 pollHandler.postDelayed(pollRunnable, 3000);
@@ -69,6 +89,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE)
                 .registerOnSharedPreferenceChangeListener(prefListener);
         setContentView(R.layout.list_list);
+        progressBar = findViewById(R.id.progressBar);
         reloadList();
         pollHandler.removeCallbacks(pollRunnable);
         pollHandler.postDelayed(pollRunnable, 3000);
@@ -115,6 +136,8 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
 
     @Override
     public void onTaskComplete(String result) {
+        stopSpinner();
+        getListView().setEnabled(true);
         products = new ArrayList<HashMap<String, String>>();
         try {
             JSONArray data_array = new JSONArray(result);
@@ -153,10 +176,11 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
 
     protected void onListItemClick(ListView list, View v, int position, long id) {
         super.onListItemClick(list, v, position, id);
+        getListView().setEnabled(false);
+        startSpinner();
         pos = list.getFirstVisiblePosition();
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
         String productId = (String) o.get("id");
-        String description = (String) o.get("description");
         String url;
         if (isQuickShopMode()) {
             url = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=3&product_id=" + productId
@@ -164,12 +188,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         } else {
             url = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=3&product_id=" + productId + "&curBasket=2";
         }
-        final String finalUrl = url;
-        new android.app.AlertDialog.Builder(this)
-                .setMessage("Move \"" + description.trim() + "\" to basket?")
-                .setPositiveButton("Move", (d, w) -> new LoadURL(ListActivity.this).execute(new String[]{finalUrl}))
-                .setNegativeButton("Cancel", null)
-                .show();
+        new LoadURL(ListActivity.this).execute(new String[]{url});
     }
 
     private void showEditDialog(int position) {
