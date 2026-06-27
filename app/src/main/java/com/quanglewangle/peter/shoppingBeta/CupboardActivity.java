@@ -423,14 +423,13 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
             Frame frame = new Frame.Builder().setBitmap(bitmap).build();
             SparseArray<TextBlock> blocks = recognizer.detect(frame);
             StringBuilder orangeText = new StringBuilder();
-            StringBuilder debugSb = new StringBuilder();
             for (int i = 0; i < blocks.size(); i++) {
                 TextBlock block = blocks.valueAt(i);
                 String text = block.getValue();
                 android.graphics.Rect bounds = block.getBoundingBox();
-                boolean orange = bounds != null && isOrangeText(bitmap, bounds);
-                debugSb.append(orange ? "[orange] " : "[     ] ").append(text).append("\n");
-                if (orange) orangeText.append(text).append("\n");
+                if (bounds != null && isOrangeText(bitmap, bounds)) {
+                    orangeText.append(text).append("\n");
+                }
             }
             recognizer.release();
             List<String> candidates = extractProductCandidates(orangeText.toString());
@@ -448,32 +447,10 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
                     }
                 }
             }
-            debugSb.append("\n--- candidates ---\n");
-            if (candidates.isEmpty()) debugSb.append("(none)\n");
-            for (String c : candidates) debugSb.append("  ").append(c).append("\n");
-            debugSb.append("\n--- allProducts ---\n");
-            debugSb.append(allProducts == null ? "(null)" : allProducts.size() + " items").append("\n");
-            debugSb.append("\n--- matches ---\n");
-            if (matchedDescs.isEmpty()) debugSb.append("(none)\n");
-            for (String m : matchedDescs) debugSb.append("  ").append(m).append("\n");
             final List<String> finalDescs = matchedDescs;
             final List<String> finalIds = matchedIds;
             final List<String> finalCandidates = candidates;
-            final String debug = debugSb.toString();
-            runOnUiThread(() -> {
-                android.widget.ScrollView sv = new android.widget.ScrollView(this);
-                android.widget.TextView tv = new android.widget.TextView(this);
-                tv.setText(debug.isEmpty() ? "(nothing read)" : debug);
-                tv.setPadding(24, 16, 24, 16);
-                tv.setTypeface(android.graphics.Typeface.MONOSPACE);
-                sv.addView(tv);
-                new AlertDialog.Builder(this)
-                    .setTitle("OCR output")
-                    .setView(sv)
-                    .setPositiveButton("Match", (d, w) -> showCouponResultDialog(finalCandidates, finalDescs, finalIds))
-                    .setNegativeButton("Cancel", null)
-                    .show();
-            });
+            runOnUiThread(() -> showCouponResultDialog(finalCandidates, finalDescs, finalIds));
         }).start();
     }
 
