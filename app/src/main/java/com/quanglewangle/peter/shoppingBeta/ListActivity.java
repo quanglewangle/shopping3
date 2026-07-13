@@ -26,6 +26,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ListActivity extends android.app.ListActivity implements AsyncTaskCompleteListener<String> {
@@ -153,6 +154,7 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
                 map.put("aisle", obj.optString("aisle"));
                 map.put("quickShopMode", obj.optString("quickShop"));
                 map.put("nectar", obj.optString("nectar", "false"));
+                map.put("linked_id", obj.optString("linked_id", "0"));
 
                 products.add(map);
             }
@@ -221,32 +223,91 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         RadioButton toBasket = (RadioButton) dialogView.findViewById(R.id.toBasketRadioButton);
         toList.setChecked(true);
 
+        HashMap<String, String> existingLinked = findLinkedPartner(product, products);
+        TextView linkedItemValue = (TextView) dialogView.findViewById(R.id.linkedItemValue);
+        String[] selectedLinkedId = {existingLinked != null ? existingLinked.get("id") : "0"};
+        linkedItemValue.setText(existingLinked != null ? existingLinked.get("description") : "None");
+        linkedItemValue.setOnClickListener(v -> showLinkPicker(productId, linkedItemValue, selectedLinkedId));
+
         AlertDialog dialog = builder.create();
 
         ((Button) dialogView.findViewById(R.id.buttonSend)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String targetBasket = toCupboard.isChecked() ? "1" : toBasket.isChecked() ? "3" : "2";
-                try {
-                    String url = Constants.SHOPPING_URL + "?cmd=updR"
-                        + "&product_id=" + productId
-                        + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
-                        + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
-                        + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
-                        + "&curBasket=" + targetBasket
-                        + "&newPrice=0&newPriority="
-                        + "&newQuickShop=" + (toCupboard.isChecked() ? "0" : quickShopCheckBox.isChecked() ? "1" : "0")
-                        + "&newNectar=" + (toBasket.isChecked() ? "0" : nectarCheckBox.isChecked() ? "1" : "0")
-                        + "&displayBasket=2";
-                    new LoadURL(ListActivity.this).execute(new String[]{url});
-                } catch (java.io.UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                if ("1".equals(targetBasket) && existingLinked != null) {
+                    new AlertDialog.Builder(ListActivity.this)
+                            .setTitle("Linked item")
+                            .setMessage("Move \"" + existingLinked.get("description") + "\" back to Cupboard too?")
+                            .setPositiveButton("Yes", (d, w) -> sendListEdit(productId, targetBasket, descriptionInput, quantityInput, aisleInput, quickShopCheckBox, nectarCheckBox, toCupboard, toBasket, selectedLinkedId[0], existingLinked))
+                            .setNegativeButton("No", (d, w) -> sendListEdit(productId, targetBasket, descriptionInput, quantityInput, aisleInput, quickShopCheckBox, nectarCheckBox, toCupboard, toBasket, selectedLinkedId[0], null))
+                            .show();
+                } else {
+                    sendListEdit(productId, targetBasket, descriptionInput, quantityInput, aisleInput, quickShopCheckBox, nectarCheckBox, toCupboard, toBasket, selectedLinkedId[0], null);
                 }
                 dialog.dismiss();
             }
         });
 
         dialog.show();
+    }
+
+    /** Finds the product linked to {@code item} within {@code pool}, if any. */
+    private HashMap<String, String> findLinkedPartner(HashMap<String, String> item, List<HashMap<String, String>> pool) {
+        String linkedId = item.get("linked_id");
+        if (linkedId == null || linkedId.equals("0") || pool == null) return null;
+        for (HashMap<String, String> p : pool) {
+            if (linkedId.equals(p.get("id"))) return p;
+        }
+        return null;
+    }
+
+    private void showLinkPicker(String productId, TextView linkedItemValue, String[] selectedLinkedId) {
+        List<String> names = new ArrayList<>();
+        List<String> ids = new ArrayList<>();
+        names.add("None");
+        ids.add("0");
+        if (products != null) {
+            for (HashMap<String, String> p : products) {
+                if (!p.get("id").equals(productId)) {
+                    names.add(p.get("description"));
+                    ids.add(p.get("id"));
+                }
+            }
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Link to item")
+                .setItems(names.toArray(new String[0]), (d, which) -> {
+                    selectedLinkedId[0] = ids.get(which);
+                    linkedItemValue.setText(names.get(which));
+                })
+                .show();
+    }
+
+    private void sendListEdit(String productId, String targetBasket, EditText descriptionInput,
+                               EditText quantityInput, EditText aisleInput, CheckBox quickShopCheckBox,
+                               CheckBox nectarCheckBox, RadioButton toCupboard, RadioButton toBasket,
+                               String newLinkedId, HashMap<String, String> alsoMoveToCupboard) {
+        try {
+            String url = Constants.SHOPPING_URL + "?cmd=updR"
+                + "&product_id=" + productId
+                + "&newDescription=" + URLEncoder.encode(descriptionInput.getText().toString(), "UTF-8")
+                + "&newQuantity=" + URLEncoder.encode(quantityInput.getText().toString(), "UTF-8")
+                + "&newAisle=" + (aisleInput.getText().toString().isEmpty() ? "0" : URLEncoder.encode(aisleInput.getText().toString(), "UTF-8"))
+                + "&curBasket=" + targetBasket
+                + "&newPrice=0&newPriority="
+                + "&newQuickShop=" + (toCupboard.isChecked() ? "0" : quickShopCheckBox.isChecked() ? "1" : "0")
+                + "&newNectar=" + (toBasket.isChecked() ? "0" : nectarCheckBox.isChecked() ? "1" : "0")
+                + "&newLinkedId=" + newLinkedId
+                + "&displayBasket=2";
+            new LoadURL(ListActivity.this).execute(new String[]{url});
+        } catch (java.io.UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        if (alsoMoveToCupboard != null) {
+            String linkedUrl = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=1&product_id=" + alsoMoveToCupboard.get("id") + "&curBasket=2";
+            new LoadURL(result -> {}).execute(new String[]{linkedUrl});
+        }
     }
 
     private boolean isQuickShopMode() {
