@@ -1,4 +1,4 @@
-package com.quanglewangle.peter.shopping3;
+package com.quanglewangle.peter.shoppingBeta;
 
 /**
  * Created by peter on 29/07/2017.
