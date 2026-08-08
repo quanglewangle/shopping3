@@ -1,6 +1,7 @@
 package com.quanglewangle.peter.shoppingBeta;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,11 @@ import java.util.HashMap;
 import java.util.Locale;
 
 public class HistoryListAdapter extends BaseAdapter {
+
+    // A little Gmail-style colored initial badge instead of spelling out the store name.
+    private static final int[] BADGE_COLORS = {
+            0xFF1976D2, 0xFF388E3C, 0xFFD32F2F, 0xFF7B1FA2, 0xFFF57C00, 0xFF00796B,
+    };
 
     private final ArrayList<HashMap<String, String>> entries;
     private final Context context;
@@ -43,8 +49,8 @@ public class HistoryListAdapter extends BaseAdapter {
     }
 
     static class ViewHolderItem {
+        TextView storeBadge;
         TextView description;
-        TextView quantity;
         TextView timestamp;
     }
 
@@ -56,8 +62,8 @@ public class HistoryListAdapter extends BaseAdapter {
             convertView = inflater.inflate(R.layout.history_list_item, parent, false);
 
             holder = new ViewHolderItem();
+            holder.storeBadge = convertView.findViewById(R.id.store_badge);
             holder.description = convertView.findViewById(R.id.description);
-            holder.quantity = convertView.findViewById(R.id.quantity);
             holder.timestamp = convertView.findViewById(R.id.timestamp);
             convertView.setTag(holder);
         } else {
@@ -66,13 +72,18 @@ public class HistoryListAdapter extends BaseAdapter {
 
         HashMap<String, String> entry = entries.get(position);
         String store = entry.get("store");
-        String description = entry.get("description");
-        if (store != null && !store.isEmpty()) {
-            description = description + " — " + store;
-        }
-        holder.description.setText(description);
-        holder.quantity.setText(entry.get("quantity"));
+        holder.description.setText(entry.get("description"));
         holder.timestamp.setText(formatTimestamp(entry.get("timestamp")));
+
+        if (store != null && !store.isEmpty()) {
+            holder.storeBadge.setVisibility(View.VISIBLE);
+            holder.storeBadge.setText(store.substring(0, 1).toUpperCase(Locale.getDefault()));
+            Drawable badgeBackground = holder.storeBadge.getBackground().mutate();
+            badgeBackground.setTint(BADGE_COLORS[Math.floorMod(store.hashCode(), BADGE_COLORS.length)]);
+            holder.storeBadge.setBackground(badgeBackground);
+        } else {
+            holder.storeBadge.setVisibility(View.GONE);
+        }
 
         return convertView;
     }
