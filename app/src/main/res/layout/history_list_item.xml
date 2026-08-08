@@ -27,6 +27,8 @@
             android:id="@+id/store_icon"
             android:layout_width="24dp"
             android:layout_height="24dp"
+            android:background="@drawable/badge_circle"
+            android:clipToOutline="true"
             android:scaleType="centerCrop"
             android:visibility="gone" />
     </FrameLayout>
