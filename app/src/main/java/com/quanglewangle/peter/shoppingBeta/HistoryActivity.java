@@ -1,7 +1,10 @@
 package com.quanglewangle.peter.shoppingBeta;
 
 import android.app.ListActivity;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.TypedValue;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -18,6 +21,26 @@ public class HistoryActivity extends ListActivity implements AsyncTaskCompleteLi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.history_list);
         setTitle("Purchase Log");
+
+        // Android 16+ forces edge-to-edge, so the action bar overlaps the list's first
+        // row. Same fix as AndroidTabAndListView's tab bar padding.
+        if (Build.VERSION.SDK_INT >= 35) {
+            ListView list = getListView();
+            TypedValue tv = new TypedValue();
+            int actionBarHeight = 0;
+            if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                actionBarHeight = TypedValue.complexToDimensionPixelSize(
+                        tv.data, getResources().getDisplayMetrics());
+            }
+            int statusBarHeight = 0;
+            int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resId > 0) {
+                statusBarHeight = getResources().getDimensionPixelSize(resId);
+            }
+            final int topPadding = statusBarHeight + actionBarHeight;
+            list.post(() -> list.setPadding(list.getPaddingLeft(), topPadding,
+                    list.getPaddingRight(), list.getPaddingBottom()));
+        }
     }
 
     @Override
