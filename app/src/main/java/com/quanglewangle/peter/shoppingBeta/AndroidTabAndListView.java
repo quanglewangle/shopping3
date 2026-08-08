@@ -129,6 +129,10 @@ public class AndroidTabAndListView extends TabActivity {
             checkAndLaunchCamera();
             return true;
         }
+        if (item.getItemId() == R.id.view_purchase_log) {
+            startActivity(new Intent(this, HistoryActivity.class));
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

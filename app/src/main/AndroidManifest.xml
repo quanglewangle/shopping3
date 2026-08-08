@@ -28,6 +28,7 @@
             android:exported="true" /> <!-- Outbox Activity -->
         <activity android:name=".ListActivity" /> <!-- Profile Activity -->
         <activity android:name=".BasketActivity" />
+        <activity android:name=".HistoryActivity" android:label="Purchase Log" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

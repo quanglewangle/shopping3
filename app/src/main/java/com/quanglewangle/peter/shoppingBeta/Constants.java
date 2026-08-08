@@ -9,6 +9,7 @@ public class Constants {
 
     public static final String CLEAR_ALL_QUICK_SHOP = SHOPPING_URL + "?cmd=clearAllQuickShop";
     public static final String LAST_MODIFIED_URL = SHOPPING_URL + "?cmd=lastModified";
+    public static final String GET_HISTORY = SHOPPING_URL + "?cmd=getHistory&limit=100";
     public static final String PREFS_NAME = "shopping_prefs";
     public static final String PREF_QUICK_SHOP_MODE = "quick_shop_mode";
 }

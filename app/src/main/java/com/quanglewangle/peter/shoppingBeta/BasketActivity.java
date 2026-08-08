@@ -2,6 +2,7 @@ package com.quanglewangle.peter.shoppingBeta;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -87,6 +88,10 @@ public class BasketActivity extends ListActivity implements AsyncTaskCompleteLis
             boolean newState = !item.isChecked();
             item.setChecked(newState);
             setQuickShopMode(newState);
+            return true;
+        }
+        if (item.getItemId() == R.id.view_purchase_log) {
+            startActivity(new Intent(this, HistoryActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);

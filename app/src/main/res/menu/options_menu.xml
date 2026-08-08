@@ -15,4 +15,8 @@
         android:id="@+id/scan_coupon"
         android:title="Scan coupon"
         android:showAsAction="never" />
+    <item
+        android:id="@+id/view_purchase_log"
+        android:title="View Purchase Log"
+        android:showAsAction="never" />
 </menu>

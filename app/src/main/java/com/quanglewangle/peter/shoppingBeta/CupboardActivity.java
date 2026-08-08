@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -161,6 +162,10 @@ public class CupboardActivity extends ListActivity implements AsyncTaskCompleteL
         }
         if (item.getItemId() == R.id.add_item) {
             showAddItemDialog();
+            return true;
+        }
+        if (item.getItemId() == R.id.view_purchase_log) {
+            startActivity(new Intent(this, HistoryActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
