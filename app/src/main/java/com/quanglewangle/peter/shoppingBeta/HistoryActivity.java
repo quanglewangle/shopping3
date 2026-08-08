@@ -37,6 +37,7 @@ public class HistoryActivity extends ListActivity implements AsyncTaskCompleteLi
                 map.put("description", obj.getString("description"));
                 map.put("quantity", obj.optString("quantity"));
                 map.put("timestamp", obj.optString("timestamp"));
+                map.put("store", obj.optString("store"));
                 entries.add(map);
             }
         } catch (JSONException e) {

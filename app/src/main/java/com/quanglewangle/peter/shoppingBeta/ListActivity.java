@@ -1,11 +1,16 @@
 package com.quanglewangle.peter.shoppingBeta;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+
+import com.google.android.gms.location.LocationServices;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -188,12 +193,41 @@ public class ListActivity extends android.app.ListActivity implements AsyncTaskC
         pos = list.getFirstVisiblePosition();
         Map o = (HashMap<String, String>) this.getListAdapter().getItem(position);
         String productId = (String) o.get("id");
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            LocationServices.getFusedLocationProviderClient(this).getLastLocation()
+                    .addOnSuccessListener(location -> moveToBasket(productId, location))
+                    .addOnFailureListener(e -> moveToBasket(productId, null));
+        } else {
+            // Ask for next time; don't block this tap on the permission result. Must go
+            // through the parent TabActivity - requestPermissions() on this child activity
+            // fails silently (see AndroidTabAndListView.requestLocationPermission()).
+            android.app.Activity parent = getParent();
+            if (parent instanceof AndroidTabAndListView) {
+                ((AndroidTabAndListView) parent).requestLocationPermission();
+            }
+            moveToBasket(productId, null);
+        }
+    }
+
+    private void moveToBasket(String productId, Location location) {
         String url;
         if (isQuickShopMode()) {
             url = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=3&product_id=" + productId
                     + "&curBasket=2&setQuickShop=0&quickShopOnly=1";
         } else {
             url = Constants.SHOPPING_URL + "?cmd=ubT&newBasket=3&product_id=" + productId + "&curBasket=2";
+        }
+        if (location != null) {
+            url += "&lat=" + location.getLatitude() + "&lon=" + location.getLongitude();
+            String store = StoreLocations.nearestStore(location.getLatitude(), location.getLongitude());
+            if (store != null) {
+                try {
+                    url += "&store=" + URLEncoder.encode(store, "UTF-8");
+                } catch (java.io.UnsupportedEncodingException e) {
+                    // UTF-8 is always supported; nothing to do.
+                }
+            }
         }
         new LoadURL(ListActivity.this).execute(new String[]{url});
     }

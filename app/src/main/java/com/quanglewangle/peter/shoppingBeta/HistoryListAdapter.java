@@ -65,7 +65,12 @@ public class HistoryListAdapter extends BaseAdapter {
         }
 
         HashMap<String, String> entry = entries.get(position);
-        holder.description.setText(entry.get("description"));
+        String store = entry.get("store");
+        String description = entry.get("description");
+        if (store != null && !store.isEmpty()) {
+            description = description + " — " + store;
+        }
+        holder.description.setText(description);
         holder.quantity.setText(entry.get("quantity"));
         holder.timestamp.setText(formatTimestamp(entry.get("timestamp")));
 

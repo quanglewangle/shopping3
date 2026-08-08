@@ -26,6 +26,7 @@ public class AndroidTabAndListView extends TabActivity {
     private static final String PROFILE_SPEC = "Basket";
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_CAMERA_PERMISSION = 2;
+    private static final int REQUEST_LOCATION_PERMISSION = 3;
     private File cameraImageFile;
 
     @Override
@@ -142,6 +143,15 @@ public class AndroidTabAndListView extends TabActivity {
         } else {
             requestPermissions(new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
         }
+    }
+
+    // Child tab activities (ListActivity etc.) are hosted via LocalActivityManager and
+    // aren't real top-level activities, so requestPermissions() called on them fails
+    // silently ("null callingPackageName") - the request has to come from this parent
+    // TabActivity instead. Fire-and-forget: the caller doesn't wait on the result, it
+    // just re-checks checkSelfPermission() next time.
+    public void requestLocationPermission() {
+        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, REQUEST_LOCATION_PERMISSION);
     }
 
     @Override
