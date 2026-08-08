@@ -21,13 +21,15 @@ public class StoreLocations {
         }
     }
 
-    // Radii are wide (1.5km) to tolerate ACCESS_COARSE_LOCATION's blurring, which can put
-    // a fix over a kilometre from the true position. Fine for telling these three apart
-    // (they're 3km+ from each other) but wouldn't distinguish two shops in the same retail park.
+    // Radii are wide (1.3-1.5km) to tolerate ACCESS_COARSE_LOCATION's blurring, which can
+    // put a fix over a kilometre from the true position. Sainsbury's and Mole Valley are
+    // only ~2.8km apart, so both are kept at 1.3km to avoid their circles overlapping;
+    // Home and Co-op are far enough from everything else to afford the full 1.5km.
     private static final Store[] STORES = {
             new Store("Home", 50.151427, -5.659950, 1500),
             new Store("Co-op, St Just", 50.124121, -5.679850, 1500),
-            new Store("Sainsbury's, Penzance", 50.128435, -5.519067, 1500),
+            new Store("Sainsbury's, Penzance", 50.128435, -5.519067, 1300),
+            new Store("Mole Valley Farmers", 50.140666, -5.484941, 1300),
     };
 
     /** Returns the name of the closest known store within its radius, or null if none match. */
