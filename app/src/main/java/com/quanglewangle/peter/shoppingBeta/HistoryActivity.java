@@ -1,9 +1,12 @@
 package com.quanglewangle.peter.shoppingBeta;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -11,6 +14,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -41,6 +46,37 @@ public class HistoryActivity extends ListActivity implements AsyncTaskCompleteLi
             list.post(() -> list.setPadding(list.getPaddingLeft(), topPadding,
                     list.getPaddingRight(), list.getPaddingBottom()));
         }
+
+        getListView().setLongClickable(true);
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                confirmDelete(position);
+                return true;
+            }
+        });
+    }
+
+    private void confirmDelete(int position) {
+        @SuppressWarnings("unchecked")
+        HashMap<String, String> entry = (HashMap<String, String>) getListAdapter().getItem(position);
+        new AlertDialog.Builder(this)
+                .setTitle("Delete log entry")
+                .setMessage("Remove \"" + entry.get("description") + "\" from the purchase log?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteEntry(entry))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteEntry(HashMap<String, String> entry) {
+        try {
+            String url = Constants.SHOPPING_URL + "?cmd=deleteHistory"
+                    + "&id=" + entry.get("id")
+                    + "&timestamp=" + URLEncoder.encode(entry.get("timestamp"), "UTF-8");
+            new LoadURL(this).execute(new String[]{url});
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -61,6 +97,7 @@ public class HistoryActivity extends ListActivity implements AsyncTaskCompleteLi
                     continue;
                 }
                 HashMap<String, String> map = new HashMap<>();
+                map.put("id", obj.optString("id"));
                 map.put("description", obj.getString("description"));
                 map.put("timestamp", obj.optString("timestamp"));
                 map.put("store", store);
