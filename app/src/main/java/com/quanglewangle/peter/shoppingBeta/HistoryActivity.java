@@ -56,10 +56,14 @@ public class HistoryActivity extends ListActivity implements AsyncTaskCompleteLi
             JSONArray dataArray = new JSONArray(result);
             for (int i = 0; i < dataArray.length(); i++) {
                 JSONObject obj = dataArray.getJSONObject(i);
+                String store = obj.optString("store");
+                if (store == null || store.isEmpty() || "Home".equalsIgnoreCase(store)) {
+                    continue;
+                }
                 HashMap<String, String> map = new HashMap<>();
                 map.put("description", obj.getString("description"));
                 map.put("timestamp", obj.optString("timestamp"));
-                map.put("store", obj.optString("store"));
+                map.put("store", store);
                 entries.add(map);
             }
         } catch (JSONException e) {

@@ -99,9 +99,12 @@ public class HistoryListAdapter extends BaseAdapter {
             holder.storeBadge.setVisibility(View.VISIBLE);
             holder.storeBadge.setText(store.substring(0, 1).toUpperCase(Locale.getDefault()));
             int color;
-            if ("Sainsbury's, Penzance".equals(store)) {
+            if (store.toLowerCase(Locale.getDefault()).contains("sainsbury")) {
                 // Sainsbury's real favicon is only 16x16 and looks blurry blown up, so
-                // approximate their brand look instead: orange, serif initial.
+                // approximate their brand look instead: orange, serif initial. Matched
+                // loosely (not an exact-string check) so older purchase-log records tagged
+                // before the store name was standardized still get the current badge
+                // instead of an arbitrary hash-based color.
                 color = SAINSBURYS_ORANGE;
                 holder.storeBadge.setTypeface(Typeface.SERIF);
             } else {
